@@ -1,13 +1,3 @@
 
-runApp("combo/")
-runApp("selection//")
-runApp("drift/")
-
+library(shiny)
 runApp(".")
-
-
-
-# library(shiny)
-# ui <- fluidPage()
-# server <- function(input,output){}
-# shinyApp(ui,server)

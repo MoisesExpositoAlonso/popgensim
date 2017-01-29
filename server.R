@@ -75,8 +75,7 @@ sapply( 1:rep , FUN=function(rep){
     return(p)
 }) #end sapply
 }
-# trial2 <- alleleFreq(mu, nu, m, wAA, wAa, waa, p0, pc, tmax, d, N,rep=3)
-# head(trial2)
+
 
 p <- reactive({ alleleFreq(mu=as.numeric(input$mu),
                              nu=as.numeric(input$nu),
@@ -92,7 +91,7 @@ p <- reactive({ alleleFreq(mu=as.numeric(input$mu),
                              rep=as.numeric(input$rep)
                              ) })
 
-  colours <- c("blue", "purple", "green")
+  colours <- c("red", "blue", "green")
 
 
   output$allelePlot <- renderPlot({
@@ -102,24 +101,25 @@ p <- reactive({ alleleFreq(mu=as.numeric(input$mu),
    newtoplot=data.frame(Generation=1:input$tmax,
                     A=p()[,rep],
                     a=1-p()[,rep])
-   p<-p+ geom_line(data=newtoplot,aes(y=A,x=Generation),color=colours[1]) + geom_line(data=newtoplot,aes(y=a,x=Generation),color=colours[2])
+   p<-p+ geom_line(data=newtoplot,aes(y=A,x=Generation,color="A")) +
+     geom_line(data=newtoplot,aes(y=a,x=Generation,color="a"))
   }
   print(p)
 })
 
   output$genoPlot <- renderPlot({
-  p<-ggplot() +ylim(c(0,1)) + xlim(c(0, input$tmax))+ ylab("Genotype frequency") + xlab("Generations")
+  p<-ggplot() +ylim(c(0,1)) + xlim(c(0, input$tmax))+ ylab("Genotype frequency") + xlab("Generations") +  scale_colour_manual("",breaks = c("AA", "aa","Aa"),labels = c("AA", "aa","Aa"),values = colours)
 
   for(rep in 1:input$rep){
 
   newtoplot=data.frame(Generation=1:input$tmax,
                     AA=p()[,rep]^2,
-                    Aa=2*p()[,rep]*(1-p()[,rep]),
-                    aa=(1-p()[,rep])^2
+                    aa=(1-p()[,rep])^2,
+                    Aa=2*p()[,rep]*(1-p()[,rep])
                     )
-  p=p+ geom_line(data=newtoplot,aes(y=AA,x=Generation),color=colours[1]) +
-    geom_line(data=newtoplot,aes(y=aa,x=Generation),color=colours[2]) +
-    geom_line(data=newtoplot,aes(y=Aa,x=Generation),color=colours[3])
+  p=p+ geom_line(data=newtoplot,aes(y=AA,x=Generation,color="AA")) +
+    geom_line(data=newtoplot,aes(y=aa,x=Generation,color="aa")) +
+    geom_line(data=newtoplot,aes(y=Aa,x=Generation,color="Aa"))
 
   }
 print(p)
