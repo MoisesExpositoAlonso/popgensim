@@ -7,12 +7,6 @@ fluidPage(
   headerPanel("Evolution of diploid populations: popgen equations for mutation, migration, selection, and drift"),
 
   sidebarPanel(
-    # navigation
-    # p(a("HOME", href="../index.html")),
-
-    # Descriptive text
-    p("Use the sliders below to explore the effects of changing parameters associated with a combination of evolutionary forces on the evolution of a population."),
-
 
     # mutation rate A->a
     sliderInput("mu", "Mutation rate A->a, mu:", min=0, max=0.001, value=0.0001, step=1*10^-5),
@@ -51,7 +45,7 @@ fluidPage(
 
   mainPanel(
     # textOutput("debug"),
-    plotOutput("allelePlot"),
+    plotOutput("allelePlot") ,
     plotOutput("genoPlot")
   )
 )

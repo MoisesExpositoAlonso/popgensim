@@ -6,8 +6,22 @@ library(cowplot)
 
 # Define server
 function(input, output) {
+# mu=0.001
+# nu=0.000001
+# m=0
+# wAA=0.9
+# wAa=0.5
+# waa=0.1
+# p0=0.5
+# pc=0.5
+# tmax=100
+# d=0.5
+# N=1000
+# rep=2
+
 
 alleleFreq <- function(mu, nu, m, wAA, wAa, waa, p0, pc, tmax, d, N,rep) {
+sapply( 1:rep , FUN=function(rep){
     p <- numeric(tmax)
     p[1] <- p0
 
@@ -59,9 +73,12 @@ alleleFreq <- function(mu, nu, m, wAA, wAa, waa, p0, pc, tmax, d, N,rep) {
 
 
     return(p)
-  }
+}) #end sapply
+}
+# trial2 <- alleleFreq(mu, nu, m, wAA, wAa, waa, p0, pc, tmax, d, N,rep=3)
+# head(trial2)
 
-  p <- reactive({ alleleFreq(mu=as.numeric(input$mu),
+p <- reactive({ alleleFreq(mu=as.numeric(input$mu),
                              nu=as.numeric(input$nu),
                              m=as.numeric(input$m),
                              wAA=as.numeric(input$wAA),
@@ -79,32 +96,35 @@ alleleFreq <- function(mu, nu, m, wAA, wAa, waa, p0, pc, tmax, d, N,rep) {
 
 
   output$allelePlot <- renderPlot({
-  toplot=data.frame(Generation=1:input$tmax,
-                    A=p(),
-                    a=1-p())
-  p<-ggplot(data=toplot) + geom_line(aes(y=A,x=Generation),color=colours[1]) + geom_line(aes(y=a,x=Generation),color=colours[2]) + ylab("Allele frequency") + xlab("Generations")
+  p<-ggplot() +ylim(c(0,1)) + xlim(c(0, input$tmax))+ ylab("Allele frequency") + xlab("Generations") +  scale_colour_manual("",labels = c("A", "a"),values = colours[1:2])
 
-  if(input$rep >1){
   for(rep in 1:input$rep){
    newtoplot=data.frame(Generation=1:input$tmax,
-                    A=p(),
-                    a=1-p())
-   p<-p+ geom_line(data=newtoplot,aes(y=A,x=Generation),color=colours[1])
-  }
+                    A=p()[,rep],
+                    a=1-p()[,rep])
+   p<-p+ geom_line(data=newtoplot,aes(y=A,x=Generation),color=colours[1]) + geom_line(data=newtoplot,aes(y=a,x=Generation),color=colours[2])
   }
   print(p)
-  })
+})
 
   output$genoPlot <- renderPlot({
-  # toplot2=data.frame(Generation=1:input$tmax,
-  #                   AA=p()^2,
-  #                   Aa=2*p()*(1-p()),
-  #                   aa=(1-p())^2
-  #                   )
-  # ggplot(data=toplot2) + geom_line(aes(y=AA,x=Generation),color=colours[1]) + geom_line(aes(y=aa,x=Generation),color=colours[2]) + geom_line(aes(y=Aa,x=Generation),color=colours[3]) + ylab("Genotype frequency") + xlab("Generations")
-  #
-  })
+  p<-ggplot() +ylim(c(0,1)) + xlim(c(0, input$tmax))+ ylab("Genotype frequency") + xlab("Generations")
+
+  for(rep in 1:input$rep){
+
+  newtoplot=data.frame(Generation=1:input$tmax,
+                    AA=p()[,rep]^2,
+                    Aa=2*p()[,rep]*(1-p()[,rep]),
+                    aa=(1-p()[,rep])^2
+                    )
+  p=p+ geom_line(data=newtoplot,aes(y=AA,x=Generation),color=colours[1]) +
+    geom_line(data=newtoplot,aes(y=aa,x=Generation),color=colours[2]) +
+    geom_line(data=newtoplot,aes(y=Aa,x=Generation),color=colours[3])
+
+  }
+print(p)
+})
 
   # debug only
-  output$debug <- renderText({ p() })
+  # output$debug <- renderText({ p() })
 }
