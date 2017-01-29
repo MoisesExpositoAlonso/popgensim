@@ -2,27 +2,14 @@ library(shiny)
 library(ggplot2)
 library(cowplot)
 
-# source("global.R")
 
 # Define server
 function(input, output) {
-# mu=0.001
-# nu=0.000001
-# m=0
-# wAA=0.9
-# wAa=0.5
-# waa=0.1
-# p0=0.5
-# pc=0.5
-# tmax=100
-# d=0.5
-# N=1000
-# rep=2
 
 
-alleleFreq <- function(mu, nu, m, wAA, wAa, waa, p0, pc, tmax, d, N,rep) {
+alleleFreq <- function(mu, nu, m, wAA, wAa, waa, p0, psource, tmax, d, N,rep) {
 sapply( 1:rep , FUN=function(rep){
-    p <- numeric(tmax)
+    p <- c()
     p[1] <- p0
 
     for (t in 1:(tmax-1)) {
@@ -30,7 +17,7 @@ sapply( 1:rep , FUN=function(rep){
       pp <- (1-mu)*p[t] + (1-p[t])*nu
 
       # next, migration
-      ppp <- (1-m)*pp + m*pc
+      ppp <- (1-m)*pp + m*psource
 
       # then selection
       if ( ( wAA*ppp^2 + wAa*2*ppp*(1-ppp) + waa*(1-ppp)^2 ) > 0) {
@@ -84,7 +71,7 @@ p <- reactive({ alleleFreq(mu=as.numeric(input$mu),
                              wAa=as.numeric(input$wAa),
                              waa=as.numeric(input$waa),
                              p0=as.numeric(input$p0),
-                             pc=as.numeric(input$pc),
+                             psource=as.numeric(input$psource),
                              tmax=as.numeric(input$tmax),
                              d=as.numeric(input$d),
                              N=as.numeric(input$N),
@@ -125,6 +112,15 @@ p <- reactive({ alleleFreq(mu=as.numeric(input$mu),
 print(p)
 })
 
-  # debug only
-  # output$debug <- renderText({ p() })
+  # output$histogram <- renderPlot({
+  # newtoplot=data.frame(Generation=1:input$tmax,
+  #                 AA=p()[input$tmax,]^2,
+  #                 aa=(1-p()[input$tmax,])^2,
+  #                 Aa=2*p()[input$tmax,]*(1-p()[,rep])
+  #                 )
+  # p <- ggplot(data=newtoplot)+geom_density
+  # print(p)
+  #
+  # })
+
 }
