@@ -78,11 +78,11 @@ p <- reactive({ alleleFreq(mu=as.numeric(input$mu),
                              rep=as.numeric(input$rep)
                              ) })
 
-  colours <- c("red", "blue", "green")
+  colours <- c("#fb8072", "#80b1d3", "#bebada")
 
 
   output$allelePlot <- renderPlot({
-  p<-ggplot() +ylim(c(0,1)) + xlim(c(0, input$tmax))+ ylab("Allele frequency") + xlab("Generations") +  scale_colour_manual("",labels = c("A", "a"),values = colours[1:2])
+  p<-ggplot() +ylim(c(0,1)) + xlim(c(0, input$tmax))+ ylab("Allele frequency") + xlab("Generations") +  scale_colour_manual("",breaks=c("A","a"),labels = c("A", "a"),values = colours[1:2])
 
   for(rep in 1:input$rep){
    newtoplot=data.frame(Generation=1:input$tmax,
@@ -95,7 +95,7 @@ p <- reactive({ alleleFreq(mu=as.numeric(input$mu),
 })
 
   output$genoPlot <- renderPlot({
-  p<-ggplot() +ylim(c(0,1)) + xlim(c(0, input$tmax))+ ylab("Genotype frequency") + xlab("Generations") +  scale_colour_manual("",breaks = c("AA", "aa","Aa"),labels = c("AA", "aa","Aa"),values = colours)
+  p<-ggplot() +ylim(c(0,1)) + xlim(c(0, input$tmax))+ ylab("Genotype frequency") + xlab("Generations") +  scale_colour_manual("",breaks = c("AA", "Aa","aa"),labels = c("AA", "Aa","aa"),values = colours[c(1,3,2)])
 
   for(rep in 1:input$rep){
 
