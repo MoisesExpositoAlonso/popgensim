@@ -8,6 +8,6 @@ library(ggplot);library(cowplot) # for plotting
 library(shiny) # for the interactive app
 
 # To start the app just run:
-run_GitHub("popgensim","MoisesExpositoAlonso")
+runGitHub("popgensim","MoisesExpositoAlonso")
 
 ```
