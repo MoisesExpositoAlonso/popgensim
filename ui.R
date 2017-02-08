@@ -39,6 +39,11 @@ sidebarPanel(
     sliderInput("N", "Initial population size: N0", min=1, max=1000, value=100, step=1) #,
 
 ),sidebarPanel(
+  "Inbreeding is expressed as the proportion of genotypes that reproduce with themselves: example fAA = p^2 * (1-Fi) + p*Fi",
+    # inbreeding coefficient
+    sliderInput("Fi", "Inbreeding coefficient: Fi", min=0, max=1, value=0, step=0.01)
+
+),sidebarPanel(
     # starting A allele frequency on focal population
     sliderInput("p0", "Initial allele frequency of A, p0:", min=0, max=1, value=0.5, step=0.01),
     # generation time

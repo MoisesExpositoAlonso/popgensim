@@ -7,7 +7,7 @@ library(cowplot)
 function(input, output) {
 
 
-alleleFreq <- function(mu, nu, m, wAA, wAa, waa, p0, psource, tmax, d, N,rep) {
+alleleFreq <- function(mu, nu, m, wAA, wAa, waa, p0, psource, tmax, d, Fi, N,rep) {
 sapply( 1:rep , FUN=function(rep){
     p <- c()
     p[1] <- p0
@@ -25,11 +25,19 @@ sapply( 1:rep , FUN=function(rep){
       } else {
         p[t+1] <- NA
       }
+      # then imbreeding (this equation is general)
+      fAA <- (p[t+1]^2 * (1-Fi)) + p[t+1]*Fi
+      fAa <- 2*p[t+1]*(1-p[t+1]) * (1-Fi)
+      faa <- (1-p[t+1])^2 * (1-Fi) + (1-p[t+1])* Fi
+      # no imbreeding
+      # fAA <- p[t+1]^2
+      # fAa <- 2*p[t+1]*(1-p[t+1])
+      # faa <- (1-p[t+1])^2
 
       # then drift
-      NAA <- round(N*p[t+1]^2)
-      NAa <- round(N*2*p[t+1]*(1-p[t+1]))
-      Naa <- round(N*(1-p[t+1])^2)
+      NAA <- round(N*fAA)
+      NAa <- round(N*fAa)
+      Naa <- round(N*faa)
 
       if (NAA <= 0) {
         NAA <- 0
@@ -74,6 +82,7 @@ p <- reactive({ alleleFreq(mu=as.numeric(input$mu),
                              psource=as.numeric(input$psource),
                              tmax=as.numeric(input$tmax),
                              d=as.numeric(input$d),
+                             Fi=as.numeric(input$Fi),
                              N=as.numeric(input$N),
                              rep=as.numeric(input$rep)
                              ) })
