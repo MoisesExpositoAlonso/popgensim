@@ -2,6 +2,10 @@
 
 Tune the forces of evolution: mutation, migration, selection, and drift (including also non-random mating); to simulate allele frequencies under the classic population genetics equations.
 
+You can refer to this repository as:
+M. Exposito-Alonso (2017) Wright-Fisher population simulations: a C++ and Shiny app implementation. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1039886.svg)](https://doi.org/10.5281/zenodo.1039886)
+
+
 
 # Get it
 
