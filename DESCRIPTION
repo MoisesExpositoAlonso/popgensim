@@ -7,5 +7,5 @@ Depends: R (>= 3.3.1)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-LinkingTo: Rcpp
-Imports: Rcpp
+LinkingTo: Rcpp, 
+Imports: Rcpp, cowplot, ggplot2, shiny, devtools
