@@ -1,0 +1,38 @@
+---
+title: "trials"
+author: "Moi"
+date: "10/2/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, results="asis"}
+n <- 100
+x <- rnorm(n)
+y <- 2*x + rnorm(n)
+out <- lm(y ~ x)
+library(xtable)
+tab <- xtable(summary(out)$coef, digits=c(0, 2, 2, 1, 2))
+print(tab, type="html")
+
+```
+
+
+```{r, results="asis"}
+MSE= 1/N * sum( (Y - (X %*% b))^2 )
+var_b= rep(MSE,M) %*% solve(t(X) %*% X)
+
+MSEgwa= 1/N * sum( (Y - (X %*% bgwa))^2 )
+var_bgwa= rep(MSEgwa,M) %*% solve(t(X) %*% X)
+
+out=matrix(c(MSEgwa,MSE)
+rownames(out)<-"MSE"
+colnames(out)<-c("bgwa","b")
+
+tab <- xtable(out),digits=c(2,2))
+print(tab, type="html")
+
+```

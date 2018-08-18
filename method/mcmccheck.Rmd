@@ -1,0 +1,102 @@
+---
+title: "mcmccheck"
+author: "Moi Exposito-Alonso"
+date: '`r Sys.Date()`'
+# output: html_document
+output:
+  pdf_document:
+  header-inclusdes:
+   - \usepackage{amsmath}
+   - \usepackage{caption}
+   - \usepackage{subcaption}
+   - \usepackage{graphicx}
+  #html_document: default
+  #header-includes:
+  #- \setlength{\parindent}{4em}
+  #- \setlength{\parskip}{0em}
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+## Load packages
+library(devtools)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(latex2exp)
+
+library(coda)
+library(Rcpp)
+
+library(moiR)
+load_all('.')
+
+```
+
+## Test Fitness functions
+
+```{r fitness, echo=FALSE,warnings=F}
+
+
+testFITNESS()
+
+
+```
+
+
+
+Example of fitness calculation and update of only one SNP
+```{r}
+X<-matrix(ncol=100,nrow=100,sample(c(-1,1), 100*100,replace=T))
+X[1,]<- -1
+X[1,1]<- 1
+message("selection coefficients uniform" )
+s = exp(rnorm(100,0,0.1)) - 1
+w1<-Wgo(X,s,1)
+s2<-s
+s2[1]<-10
+w2<-Wgo(X,s,s2,1,w1)
+w3=Wgo(X,s2,1)
+
+plot(s,s2)
+plot(w1,w2)
+plot(w2,w3)
+
+```
+
+
+## Test proposals of hyperparameters
+Here all get updated at each iteration, in the MCMC one at a time
+
+```{r proposal hyperparameters, echo=FALSE}
+
+test_GPROPOSALR()
+
+
+```
+
+## Test proposals of selection coefficients
+```{r}
+message("Uniform distribution")
+test_SPROPOSALR(1)
+
+message("lognormal distribution")
+test_SPROPOSALR(3)
+
+```
+
+
+
+## Test prior
+```{r}
+
+y=test_PRIORR()
+
+qplot(y, xlab='likelihood')
+
+```
+
+
+
+

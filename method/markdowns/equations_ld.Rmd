@@ -1,0 +1,241 @@
+---
+title: "Genome-wide LD change as a signature of selection in experimental populations"
+# subtitle: "EQUATIONS"
+author: "Moi Exposito-Alonso"
+# date: '`r Sys.Date()`'
+output:
+  pdf_document:
+  header-inclusdes:
+   - \usepackage{amsmath}
+   - \usepackage{caption}
+   - \usepackage{subcaption}
+   - \usepackage{graphicx}
+  #html_document: default
+  #header-includes:
+  #- \setlength{\parindent}{4em}
+  #- \setlength{\parskip}{0em}
+---
+
+<!-- ***** -->
+
+### Genotypes and LD 
+
+Given two loci, A and B, with alleles A and a, and B and b, there must be nine possible gammetes. If the A allele and B allele are selected with coefficients $s_{A}$ and $s_{B}$, and we assume no dominance and no epistasis, we can write the average fitness per genotype. For simplicity we use an haploid model, which would be similar to the diploid homozygotes case:
+
+
+\
+\begin{center}
+\begin{tabular}{ c | c  c}
+     &       B            &     b       \\ 
+  \hline
+  A & $1+s_A +s_B $&$ 1+s_{A} -s_{B}  $\\  
+  a & $1- s_{A} + s_{B}$&$ 1-s_A - s_B          $    
+\end{tabular}
+\end{center}
+\
+
+
+\
+\begin{center}
+\begin{tabular}{ c | c  c}
+     &       B            &     b       \\ 
+  \hline
+  A & $(1+s_A)(1+s_B) $&$ (1+s_{A}) (1-s_{B})  $\\  
+  a & $(1- s_{A})(1+ s_{B})$&$ (1-s_A)(1-s_B)          $    
+\end{tabular}
+\end{center}
+\
+
+\
+\begin{center}
+\begin{tabular}{ c | c  c}
+     &       B            &     b       \\ 
+  \hline
+  A & $(1+s_A)(1+s_B) \times \epsilon $&$ (1+s_{A}) (1-s_{B})  $\\  
+  a & $(1- s_{A})(1+ s_{B})$&$ (1-s_A)(1-s_B) \times \epsilon          $    
+\end{tabular}
+\end{center}
+\
+
+\
+\begin{center}
+\begin{tabular}{ c | c  c}
+     &       B            &     b       \\ 
+  \hline
+  A & $[(1+s_A)(1+s_B)]^{\epsilon} $&$ (1+s_{A}) (1-s_{B})  $\\  
+  a & $(1- s_{A})(1+ s_{B})$&$ [(1-s_A)(1-s_B)]^{\epsilon}          $    
+\end{tabular}
+\end{center}
+\
+
+
+<!-- \begin{center} -->
+<!-- \begin{tabular}{ c | c c c} -->
+<!--      &       BB            &         Bb          &    bb       \\  -->
+<!--   \hline -->
+<!--   AA & $1+2 s_{B}+2 s_{B} $&$ 1+ 2 s_{A}+ s_{B} $&$ 1+2s_{A}  $\\   -->
+<!--   Aa & $1+  s_{A}+2 s_{B} $&$ 1+  s_{A}+ s_{B}  $&$ 1+s_{A}   $\\ -->
+<!--   aa & $1+2 s_{B}         $&$ 1+ s_{B}          $&$ 1         $     -->
+<!-- \end{tabular} -->
+<!-- \end{center} -->
+
+Note that in this model, although it is haploid, it is general enough to represent additive as well as interaction effects in fitness. When the $\kappa>1$, there ismultiplicative fitness, when $0<\kappa<1$ it is synergistic fitness, cases of $\kappa<0$ could represent some type of antagonistic epistatic effects (although there is room for other functions). 
+
+Overall, the table of frequencies would look like:
+\
+
+\begin{center}
+\begin{tabular}{ c | c  c}
+     &       B            &     b       \\ 
+  \hline
+  A & $x1=pq +D$&$ x3=p(1-q)-D $\\  
+  a & $x3=(1-p)q-D$&$ x4=(1-p)(1-q)+D $    
+\end{tabular}
+\end{center}
+
+If we know the frequency of A (p) and B (q) in the population, and also have faced genotype, so the frequency of the different gametes can be calculated, the LD between the alleles can be erxpressed as:
+
+\begin{equation} \label{D}
+D = x_{1} -pq = x_{1}x_{4} - x_{2}x_{3} 
+\end{equation}
+
+And the scaled measurement of LD independent on frequency can be written as:
+
+\begin{equation}
+r^2= \frac{D}{\sqrt{p(1-p)q(1-q)}}
+\end{equation}
+
+\begin{equation}
+R= \frac{x_{1}x_{4}}{x_{2}x_{3} }
+\end{equation}
+
+\begin{equation}
+R_{t1/t0}= \frac{w_{1}w_{4}}{w_{2}w_{3} }
+\end{equation}
+
+
+
+### Selection
+
+Then selection over allele A should produce an increase of the frequency p:
+
+\begin{equation}
+p_{t+1}=p_{t}(1+s_A) / \bar{w}
+\end{equation}
+
+
+And with linkage disequilibrium:
+\begin{align}
+  p_{t+1} &=\frac{x_{1 \ t+1} + x_{2 \ t+1}}{\bar{w}} \\
+  p_{t+1} \bar{w} &= (pq+D)(1+s_A+s_B+K) + (p(1-q)-D)(1+s_A) \\
+  p_{t+1} \bar{w} &= p(1+s_A) + pq(s_B+K)+d(s_B+K) \\
+\end{align}
+
+,where $K = s_As_B\kappa$ for simplicity.
+
+<!-- I think this is wrong, although it is probably a good guess -->
+<!-- p_{t}(1+s_A+ r^2 \times s_B) +  / \bar{w} --> 
+
+We got ride of the denominator term $\bar{w}$ that is the average fitness in the next generation. We can develop the equation of haplotype frequencies to express it in terms of $p$, $q$ and $D$:
+
+\begin{align} 
+  \bar{w} &= x1(1+s_A+ s_B) + x2(1+s_A)+ x3(1+s_B) +x4   
+           = 1+ps_A+q_sB+pqK+DK
+\end{align}
+
+Interestingly, the mean fitness does not depend in the LD term except if there is interaction of fitness effects.
+Note: this was solved by noting that all haplotypes need to sum 1 and that $pq+p(1-p) = p$ and vice versa.
+
+
+
+### Change in LD due to selection
+
+<!-- Knowing that LD is not going to change the average fitness but it does change the allele frequencies and particularly the D, we want to find the function $\Delta D = D_{t+1} - D_t$. We start with the D after one generation of seleciton: -->
+
+<!-- \begin{align} -->
+<!--   D_{t+1} &= x_{1\ t+1} - p_{t+1} \times q_{t+1} \nonumber \\ -->
+<!--   D_{t+1} \times \bar{w}_{t+1} &= (pq+D)(1+s_A+s_b+K) - p(1+s_a+qs_b+qK) \times q(1+s_b+ps_b+pK) \nonumber \\ -->
+<!-- \end{align} -->
+
+<!-- The previous equation unfolds in a large algebraic expression, that can be simplified by cencelling terms, ignoring square terms. It is further simplified thanks to the K terms in the denominator of w_{t+1}, which only leaves terms multiplied by K. Assuming them zero allows the (additive) approximation. Perhaps a better approximation that incorporates epistatic terms can be managed. -->
+
+<!-- \begin{align} -->
+<!--   D_{t+1} &\approx \frac{D_t +Ds_A (1-p) +Ds_B (1-q) +qps_As_B(1+2D)}{1+ps_A+qs_B} -->
+<!-- \end{align} -->
+
+
+<!-- Then we plug in the result into the $\Delta D$ equation and use the solution of the mean fitness from the previous equation.  -->
+
+<!-- \begin{align} -->
+<!--   \Delta D &= \frac{D_t +D_t s_A (1-p) +D_ts_B (1-q) +qps_As_B(1+2D)}{1+ps_A+qs_B} - D_t  \nonumber \\ -->
+<!--   \Delta D &= D_t +D_t s_A (1-p) +D_ts_B (1-q) +qps_As_B(1+2D) - D_t -D_t s_A p -D_t s_B q \nonumber \\ -->
+<!--   \Delta D &= Ds_A (1-p) +Ds_B (1-q) + qps_As_B(1+2D) - D_t s_A p - D_t s_B q \nonumber \\ -->
+<!--   \Delta D &= Ds_A (1-2p) +Ds_B (1-2q) + qps_As_B(1+2D) \nonumber \\ -->
+<!--   \Delta D &= p q s_A s_B + D(s_A+s_B+ 2 p q s_A s_B -2ps_A-2qs_B)  -->
+<!-- \end{align} -->
+
+<!-- The above formula tells that the increase of LD as by $\Delta D$ can be expressed in to terms. The first is related only to the presence of an adaptive haplotype (AB) with a selection multiplicative effect. The second is related to the previous excess of AB haplotype, $D$, multiplied by the selection over those.  -->
+
+From Felsenstein we know that LD would not change with selection unless there is an epistatic term.
+
+
+
+### Relationship with Genome-Wide LD calculations
+
+Having a $X$ genome matrix with $N$ individuals in the rows and $M$ SNPs as columns, we efficiently obtain the genome-wide LD using linear algebra as:
+
+\begin{equation} \label{ldalgebra}
+ V=\frac{1}{N} X^T X
+\end{equation}
+
+The matrix $V$ has in the off-diagonal elements the $r^2$ LD coefficient. Thi is because:
+
+\begin{align} \label{correlation}
+r^2 &= \frac{cov(X,Y)}{sd(X) \times sd{Y}}  \\
+    &= \frac{E[(X-\bar{x})(Y-\bar{y})] }{\sqrt{E[(X-\bar{x})^2] \times E[(X-\bar{x})^2]}} \\
+\end{align}
+
+The equation (\ref{ldalgebra}) is only identical to (\ref{correlation}) if the $X$ matrix is mean centered, and also variance scaled. 
+
+If $X$ would not be variance centered, $V$ would correspond to a covariance matrix, and if it was not mean centered, it would be other non-standard statistical entity. 
+
+One more relationship about the covariance:
+
+\begin{align} \label{covD}
+cov(XY)=E[(X-\bar{x})(Y-\bar{y})] =E[XY]-E[X]E[Y]=\frac{XY^T}{N}-\frac{E[X]E[Y]^T}{N} = D. 
+\end{align}
+
+### Data on LD change
+
+Using the absolute fitness from the field experiment under drought conditions and a randomly selected set of SNPs, the change in LD can be calculated.
+
+<!-- \includegraphics[width=4in]{../figs/ld_scatter_random.pdf} -->
+
+<!-- \ -->
+
+<!-- The same can be done in a window of 200 SNPs around a region that had a peak in the GWA. -->
+<!-- \includegraphics[width=4in]{../figs/ld_scatter_peak.pdf} -->
+
+<!-- \ -->
+
+<!-- And this is the raw change. -->
+
+<!-- \includegraphics[width=4in]{../figs/ld_matrixchange.pdf} -->
+
+
+### The use of absolute fitness 
+
+Having absolute fitness, how can I calculate the new covariance without actually building a new genome matrix?
+
+
+### Quantification of the total potential interference of LD
+
+Summatory of all LD values relative to the total genetic distances. It needs to be expressed as per bp or cM in order to make it comparable with other systems that might not have the same density of markers.
+
+
+### Inference of selection from LD
+
+It would be of interst to genearte an expectation of $V$ given 2 loci (or more) under selection.
+
+
+$$\mathcal{L} $$

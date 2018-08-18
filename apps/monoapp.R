@@ -1,5 +1,8 @@
 
 devtools::load_all(".")
+library(shiny)
+library(ggplot2)
+library(cowplot)
 
 ####************************************************************************####
 # Define server

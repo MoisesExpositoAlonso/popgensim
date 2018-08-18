@@ -1,0 +1,561 @@
+---
+title: "Genome-wide LD change as a signature of selection in experimental populations"
+# subtitle: "EQUATIONS"
+author: "Moi Exposito-Alonso"
+# date: '`r Sys.Date()`'
+output:
+  pdf_document:
+  header-inclusdes:
+   - \usepackage{amsmath}
+   - \usepackage{caption}
+   - \usepackage{subcaption}
+   - \usepackage{graphicx}
+  #html_document: default
+  #header-includes:
+  #- \setlength{\parindent}{4em}
+  #- \setlength{\parskip}{0em}
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE)
+set.seed(1)
+```
+
+
+```{r packages, include=FALSE}
+## Load packages
+library(devtools)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(latex2exp)
+
+devtools::load_all('.')
+# library('gws')
+library(moiR)
+
+```
+ 
+
+
+\
+\begin{center}
+\begin{tabular}{ c | c  c}
+     &       B            &     b       \\ 
+  \hline
+  A & $(1+s_A)(1+s_B) $&$ (1+s_{A})  $\\  
+  a & $(1+ s_{B})$&$ 1$    
+\end{tabular}
+\end{center}
+\
+
+<!-- \ -->
+<!-- \begin{center} -->
+<!-- \begin{tabular}{ c c c c c c c c c} -->
+<!--      C & & & &     c       \\  -->
+<!--   \hline -->
+<!--      B && b && B && b\\  -->
+<!--   \hline -->
+<!--      A & a & A & a & A & a & A & a\\  -->
+<!--   \hline -->
+<!--   $(1+s_A)(1+s_B) $&$ (1+s_{A}) (1-s_{B})  $\\   -->
+<!--   $(1- s_{A})(1+ s_{B})$&$ (1-s_A)(1-s_B)          $     -->
+<!-- \end{tabular} -->
+<!-- \end{center} -->
+<!-- \ -->
+
+
+## The D and R do not have an 1 to 1 relationship
+```{r}
+
+x1<-seq(0.01,0.99,0.1)
+x2<-seq(0.01,0.99,0.1)
+x3<-seq(0.01,0.99,0.1)
+x4<-seq(0.01,0.99,0.1)
+
+allxs<-expand.grid(x1,x2,x3,x4)
+
+ggdotscolor(getD(allxs),getR(allxs), xlab='D',ylab="Felsenstein's R") + scale_y_log10()
+
+```
+
+# LD (r2, D nor R) does not change with multiplicative selection without epistasis
+```{r}
+s<-seq(-0.5,+0.5,0.05)
+t<-seq(-0.5,+0.5,0.05)
+E<-0
+
+ts<-expand.grid(t,s,E)
+
+w1<-(1+ts[,1]+ts[,2])
+w1<-(1+ts[,1])*(1+ts[,2])
+w1<-(1+ts[,1])*(1+ts[,2]) *(1+ts[,3])
+w2<-(1+ts[,2])
+w3<-(1+ts[,1])
+w4<-rep(1,nrow(ts))
+allw<-cbind(w1,w2,w3,w4)
+
+qplot(x=fn(getR2change(allw)), xlab=TeX('r^2 change'))
+qplot(x=fn(getDchange(allw)), xlab=TeX('D change'))
+qplot(x=fn(getRchange(allw)), xlab=TeX('R change'))
+
+
+```
+
+# LD does change with multiplicative selection and multiplicative epistasis
+```{r}
+s<-seq(-0.5,+0.5,0.05)
+t<-seq(-0.5,+0.5,0.05)
+E<-seq(-0.5,+0.5,0.05)
+
+ts<-expand.grid(t,s,E)
+
+w1<-(1+ts[,1]+ts[,2])
+w1<-(1+ts[,1])*(1+ts[,2])
+w1<-(1+ts[,1])*(1+ts[,2]) *(1+ts[,3])
+w2<-(1+ts[,2])
+w3<-(1+ts[,1])
+w4<-rep(1,nrow(ts))
+allw<-cbind(w1,w2,w3,w4)
+
+
+qplot(x=fn(getR2change(allw)), xlab=TeX('r^2 change'))
+qplot(x=fn(getDchange(allw)), xlab=TeX('D change'))
+qplot(x=fn(getRchange(allw)), xlab=TeX('R change'))
+
+```
+
+
+# LD does change with multiplicative selection and power epistasis
+```{r}
+s<-seq(-0.5,+0.5,0.05)
+t<-seq(-0.5,+0.5,0.05)
+E<-seq(-0.5,+0.5,0.05)
+
+ts<-expand.grid(t,s,E)
+
+w1<-((1+ts[,1])*(1+ts[,2]))^(1+ts[,3])
+w2<-(1+ts[,2])
+w3<-(1+ts[,1])
+w4<-rep(1,nrow(ts))
+allw<-cbind(w1,w2,w3,w4)
+
+qplot(x=fn(getR2change(allw)), xlab=TeX('r^2 change'))
+qplot(x=fn(getDchange(allw)), xlab=TeX('D change'))
+qplot(x=fn(getRchange(allw)), xlab=TeX('R change'))
+
+```
+
+
+# Does LD change with a 3rd locus unders selection?
+
+```{r}
+
+
+Dc<-0.02
+pc<-0.1
+sc<-0.8
+
+s<-seq(-0.5,+0.5,0.05)
+t<-seq(-0.5,+0.5,0.05)
+E<-seq(-0.5,+0.5,0.05)
+E<-0
+
+ts<-expand.grid(t,s,E)
+
+w1<-(((1+ts[,1])*(1+ts[,2]))^(1+ts[,3]) )  [1]
+w2<-(1+ts[,2])                           [1]
+w3<-(1+ts[,1])                           [1]   
+w4<-rep(1,nrow(ts))                      [1]   
+allw<-cbind(w1,w2,w3,w4)
+
+a=0.2
+b=0.3
+c=0.6
+
+Dab<-0.05
+Dbc<-0.03
+Dac<-0.02
+  
+
+freq3<-function(G='ABC',a,b,c,Dab,Dac,Dbc){
+  
+  a*b*c  * (1+Dab+Dac+Dbc - (Dab*Dac)-(Dab*Dbc)-(Dac*Dbc) +(Dab*Dac*Dbc))
+
+}
+ABC<- a*b*c  + (Dab+Dac+Dbc - (Dab*Dac)-(Dab*Dbc)-(Dac*Dbc) +(Dab*Dac*Dbc))
+aBC<- (1-a)*b*c + (-Dab+Dac+Dbc - (Dab*Dac)-(Dab*Dbc)-(Dac*Dbc) +(Dab*Dac*Dbc))
+AbC<- a*(1-b)*c * (1+Dab)
+abC<- (1-a)*(1-b)*c * (1+Dab)
+ABc<- a*b*(1-c) * (1+Dab)
+aBc<- (1-a)*b*(1-c) * (1+Dab)
+Abc<- a*(1-b)*(1-c) * (1+Dab)
+abc<- (1-a)*(1-b)*(1-c) * (1+Dab)
+
+
+x1C =0.4
+x4C =0.4
+x2C =0.1
+x3C =0.1
+
+e=0
+
+w1<-((1+sa)*(1+sb))^(1+e) 
+w2<-(1+sb)                           
+w3<-(1+sa)                           
+w4<-1
+
+sc=0.8
+
+w1<- (1-x1C) * w1 + x1C *(w1*(1+sc))
+w4<- (1-x4C) * w4 + x4C *(w4*(1+sc))
+w2<- (1-x2C) * w2 + x2C *(w2*(1+sc))
+w3<- (1-x3C) * w3 + x3C *(w3*(1+sc))
+
+(w1*w4) / (w2*w3)
+
+
+# x1p = (x1*pc +Dc) * (w1+sc) + (1-(x1*pc+Dc)) *(w1)
+# x2p = (x2*pc -Dc) * (w2+sc) + (1-(x2*pc-Dc)) *(w2)
+# x3p = (x3*pc -Dc) * (w3+sc) + (1-(x3*pc-Dc)) *(w3)
+# x4p = (x4*pc +Dc) * (w4+sc) + (1-(x4*pc+Dc)) *(w4)
+# 
+# x1p= ()
+# 
+# w_hat=(x1p+x2p+x3p+x4p)
+# x1p=x1p/w_hat
+# x2p=x2p/w_hat
+# x3p=x3p/w_hat
+# x4p=x4p/w_hat
+# 
+# pp<-x1p+x2p
+# qp<-x3p+x4p
+# pp+qp
+# p=x1+x2
+# q=x3+x4
+# 
+# ((x1p*x4p) / (x2p*x3p) ) - (x1*x4) / (x2*x3) 
+# ((x1p*x4p) - (x2p*x3p) ) - (x1*x4) - (x2*x3) 
+# 
+# (((x1p*x4p) - (x2p*x3p) )/sqrt(pp*qp*(1-pp)*(1-qp)) ) - ( ((x1*x4) - (x2*x3)) /sqrt(p*q*(1-p)*(1-q)) )
+# 
+# 
+# x
+
+```
+
+
+
+```{r,fig.asp=1}
+
+X<-get_topSNPs(100,navalue = 0.5)
+dim(X)
+X[,1] <-X[,1] * (-1)
+
+nsnps=3
+
+ldfocal<-c()
+Dwith3rd<-c()
+
+for(i in 1:1000){
+  Xs<-X[,sample(1:100,nsnps)]
+  Xs[Xs==(-1)]<-0
+  
+  s<-rep(0.5,nsnps)
+  # e<- 0.8
+  e<- 0
+  
+  haps<-apply(Xs,1,function(i) prod(i))
+  w<- apply(1+ s*Xs, 1, function(i){prod(i)})
+  w<-w^(1+(e*haps))
+  
+  ldnow_d<-ldCnow(Xs,R = FALSE,dolog = FALSE, addone=FALSE) %>% upperTmat()
+  ldnow<-ldCnow(Xs,R = TRUE,dolog = FALSE, addone=FALSE) %>% upperTmat()
+  ldnext<-ldCnext(Xs,w,R=TRUE,dolog = FALSE,addone=FALSE) %>% upperTmat()
+  ldnext/ldnow
+  Dwith3rd<-append(Dwith3rd,mean(ldnow_d[-1],na.rm=TRUE))
+  ldfocal<-append(ldfocal,mean((ldnext/ldnow)[1],na.rm=TRUE))
+  
+}
+
+qplot(ldfocal,xlab='R between two focal SNPs',xlim=c(0,2))+
+  geom_vline(xintercept = mean(ldfocal,na.rm = T), col='firebrick', lty='dashed',lwd=2)
+# hist(ldfocal)
+mean(ldfocal,na.rm = T)
+
+
+
+for(i in 1:1000){
+  Xs<-X[,sample(1:100,nsnps)]
+  Xs[Xs==(-1)]<-0
+  
+  s<-rep(0.5,nsnps)
+  # e<- 0.8
+  e<- 1
+  
+  haps<-apply(Xs,1,function(i) prod(i))
+  w<- apply(1+ s*Xs, 1, function(i){prod(i)})
+  w<-w^(1+(e*haps))
+  
+  ldnow_d<-ldCnow(Xs,R = FALSE,dolog = FALSE, addone=FALSE) %>% upperTmat()
+  ldnow<-ldCnow(Xs,R = TRUE,dolog = FALSE, addone=FALSE) %>% upperTmat()
+  ldnext<-ldCnext(Xs,w,R=TRUE,dolog = FALSE,addone=FALSE) %>% upperTmat()
+  ldnext/ldnow
+  Dwith3rd<-append(Dwith3rd,mean(ldnow_d[-1],na.rm=TRUE))
+  ldfocal<-append(ldfocal,mean((ldnext/ldnow)[1],na.rm=TRUE))
+  
+}
+
+qplot(ldfocal,xlab='R between two focal SNPs',xlim=c(0,2))+
+  geom_vline(xintercept = mean(ldfocal,na.rm = T), col='firebrick', lty='dashed',lwd=2)
+# hist(ldfocal)
+mean(ldfocal,na.rm = T)
+
+
+
+
+# It does not change with 2 SNPs
+Xs<-Xs[,1:2]
+s<-s[1:2]
+w<- apply(1+ (s*Xs) , 1, function(i){prod(i)})
+ldnow<-ldCnow(Xs,R = TRUE,dolog = FALSE, addone=FALSE) %>% upperTmat()
+ldnext<-ldCnext(Xs,w,R=TRUE,dolog = FALSE,addone=FALSE) %>% upperTmat()
+ldnext/ldnow
+
+Xs<-Xs[,1:2]
+s<-s[1:2]
+e<- 0.1
+e<- 0
+haps<-apply(Xs,1,function(i) prod(i))
+w<- apply(1+ s*Xs, 1, function(i){prod(i)})
+w<-w^(1+(e*haps))
+ldnow<-ldCnow(Xs,R = TRUE,dolog = FALSE, addone=FALSE) %>% upperTmat()
+ldnext<-ldCnext(Xs,w,R=TRUE,dolog = FALSE,addone=FALSE) %>% upperTmat()
+ldnext/ldnow
+
+
+# qplot(ldfocal,xlab='R between two focal SNPs')+
+#   geom_vline(xintercept = mean(ldfocal,na.rm = T), col='firebrick', lty='dashed',lwd=2)
+
+
+
+```
+
+
+
+
+<!-- ```{r} -->
+
+
+
+<!-- sa= 0.25 -->
+<!-- sb=0.7 -->
+
+<!-- pa=0.5 -->
+<!-- pb=0.5 -->
+
+<!-- Dab=0.05 -->
+
+
+<!-- genos<-expand.grid(c('A','a'),c('B','b')) -->
+<!-- genos$g<-paste(genos$Var1,genos$Var2,genos$Var3,sep='') -->
+<!-- genos<-data.frame(genos) -->
+
+<!-- #---------------C-------------A-----B------------ -->
+<!-- #---------------|-------------|-----|------------ -->
+
+<!-- genos$x<-1 -->
+<!-- genos$w<-1 -->
+
+<!-- genos[which(genos$g =='AB'),'w']<- (1+sa)*(1+sb) -->
+<!-- genos[which(genos$g =='aB'),'w']<- (1+sb) -->
+<!-- genos[which(genos$g =='Ab'),'w']<- (1+sa) -->
+<!-- genos[which(genos$g =='ab'),'w']<- 1 -->
+
+<!-- # Dab=Dab/2 -->
+<!-- # Dac=Dac/2 -->
+<!-- # Dbc=Dbc/2 -->
+
+<!-- genos[which(genos$g =='AB'),'x']<- pa*pb + Dab -->
+<!-- genos[which(genos$g =='aB'),'x']<- (1-pa)*pb - Dab -->
+<!-- genos[which(genos$g =='Ab'),'x']<- pa*(1-pb) - Dab -->
+<!-- genos[which(genos$g =='ab'),'x']<- (1-pa)*(1-pb) + Dab -->
+<!-- genos -->
+
+<!-- genos$xprime <- genos$x * genos$w -->
+<!-- genos$xprime<-genos$xprime/sum(genos$xprime) -->
+
+<!-- sum(genos$x) -->
+<!-- sum(genos$xprime) -->
+
+<!-- pa1= sum(dplyr::filter(genos,Var1 =='A')$xprime)  -->
+<!-- pb1 =sum(dplyr::filter(genos,Var2 =='B')$xprime)  -->
+
+<!-- (genos[1,'x'] * genos[4,'x']) - (genos[3,'x'] * genos[2,'x']) -->
+<!-- (genos[1,'xprime'] * genos[4,'xprime']) - (genos[3,'xprime'] * genos[2,'xprime']) -->
+
+<!-- (genos[1,'x'] * genos[4,'x']) / (genos[3,'x'] * genos[2,'x']) -->
+<!-- (genos[1,'xprime'] * genos[4,'xprime']) / (genos[3,'xprime'] * genos[2,'xprime']) -->
+<!-- (genos[1,'w'] * genos[4,'w']) / (genos[3,'w'] * genos[2,'w']) -->
+
+
+<!-- ( -->
+<!--   sum(dplyr::filter(genos,Var1 =='C' & Var2 =='B')$x) * sum(dplyr::filter(genos,Var1 =='c' & Var2 =='b')$x) -->
+<!-- )-( -->
+<!--   sum(dplyr::filter(genos,Var1 =='C' & Var2 =='b')$x) * sum(dplyr::filter(genos,Var1 =='c' & Var2 =='B')$x) -->
+<!-- ) -->
+<!-- ( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$x) -->
+<!-- )-( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$x) -->
+<!-- ) -->
+<!-- ( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$xprime) -->
+<!-- )-( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$xprime) -->
+<!-- ) -->
+
+<!-- # D change -->
+<!-- ( -->
+<!-- ( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$xprime))-( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$xprime))  -->
+<!-- )-( -->
+<!--   ( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$x))-( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$x) -->
+<!-- ) -->
+<!-- ) -->
+
+<!-- # r2 change -->
+<!-- (( -->
+<!--   (( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$xprime))-( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$xprime))  -->
+<!--   )/(sqrt(pa*pb*(1-pa)*(1-pb))) -->
+<!-- ))-(( -->
+<!--   (( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$x))-( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$x) -->
+<!--   ))/(sqrt(pa1*pb1*(1-pa1)*(1-pb1))) -->
+<!-- )) -->
+
+<!-- ``` -->
+
+
+
+<!-- ```{r} -->
+
+
+<!-- sa= 0.25 -->
+<!-- sb=0.7 -->
+<!-- sc=0 -->
+
+<!-- pa=0.5 -->
+<!-- pb=0.5 -->
+<!-- pc=0 -->
+
+<!-- Dab=0.05 -->
+<!-- Dac=0 -->
+<!-- Dbc=0 -->
+
+
+<!-- genos<-expand.grid(c('A','a'),c('B','b'),c('C','c')) -->
+<!-- genos$g<-paste(genos$Var1,genos$Var2,genos$Var3,sep='') -->
+<!-- genos<-data.frame(genos) -->
+
+<!-- #---------------C-------------A-----B------------ -->
+<!-- #---------------|-------------|-----|------------ -->
+
+<!-- genos$x<-1 -->
+<!-- genos$w<-1 -->
+
+<!-- genos[which(genos$g =='ABC'),'w']<- (1+sa)*(1+sb)*(1+sc) -->
+<!-- genos[which(genos$g =='aBC'),'w']<- (1+sb)*(1+sc) -->
+<!-- genos[which(genos$g =='AbC'),'w']<- (1+sa)*(1+sc) -->
+<!-- genos[which(genos$g =='abC'),'w']<- (1+sc) -->
+<!-- genos[which(genos$g =='ABc'),'w']<- (1+sa)*(1+sb) -->
+<!-- genos[which(genos$g =='aBc'),'w']<- (1+sb) -->
+<!-- genos[which(genos$g =='Abc'),'w']<- (1+sa) -->
+<!-- genos[which(genos$g =='abc'),'w']<- 1 -->
+
+
+<!-- Dab=Dab/2 -->
+<!-- Dac=Dac/2 -->
+<!-- Dbc=Dbc/2 -->
+
+<!-- genos[which(genos$g =='ABC'),'x']<- pa*pb*pc + Dab+Dac+Dbc -->
+<!-- genos[which(genos$g =='aBC'),'x']<- (1-pa)*pb*pc - Dab-Dac+Dbc -->
+<!-- genos[which(genos$g =='AbC'),'x']<- pa*(1-pb)*pc - Dab+Dac-Dbc -->
+<!-- genos[which(genos$g =='abC'),'x']<- (1-pa)*(1-pb)*pc + Dab-Dac-Dbc -->
+<!-- genos[which(genos$g =='ABc'),'x']<- pa*pb*(1-pc) + Dab-Dac-Dbc -->
+<!-- genos[which(genos$g =='aBc'),'x']<- (1-pa)*pb*(1-pc) -Dab+Dac-Dbc -->
+<!-- genos[which(genos$g =='Abc'),'x']<- pa*(1-pb)*(1-pc) -Dab-Dac+Dbc -->
+<!-- genos[which(genos$g =='abc'),'x']<- (1-pa)*(1-pb)*(1-pc) +Dab+Dac+Dbc -->
+<!-- genos -->
+
+<!-- genos$xprime<-(genos$w *genos$x)  -->
+<!-- genos$xprime<-genos$xprime/ sum(genos$xprime) -->
+
+<!-- sum(genos$x) -->
+<!-- sum(genos$xprime) -->
+
+<!-- pa1= sum(dplyr::filter(genos,Var1 =='A')$xprime)  -->
+<!-- pb1 =sum(dplyr::filter(genos,Var2 =='B')$xprime)  -->
+<!-- pc1 =sum(dplyr::filter(genos,Var3 =='C')$xprime)  -->
+
+
+<!-- ( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='C')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='c')$x) -->
+<!-- )-( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='c')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='C')$x) -->
+<!-- ) -->
+<!-- ( -->
+<!--   sum(dplyr::filter(genos,Var1 =='C' & Var2 =='B')$x) * sum(dplyr::filter(genos,Var1 =='c' & Var2 =='b')$x) -->
+<!-- )-( -->
+<!--   sum(dplyr::filter(genos,Var1 =='C' & Var2 =='b')$x) * sum(dplyr::filter(genos,Var1 =='c' & Var2 =='B')$x) -->
+<!-- ) -->
+<!-- ( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$x) -->
+<!-- )-( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$x) -->
+<!-- ) -->
+<!-- ( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$xprime) -->
+<!-- )-( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$xprime) -->
+<!-- ) -->
+<!-- ( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$xprime) -->
+<!-- )-( -->
+<!--   pa1 * pb1 -->
+<!-- ) -->
+
+
+<!-- ( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$x) -->
+<!-- )/( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$x) -->
+<!-- ) -->
+<!-- ( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$xprime) -->
+<!-- )/( -->
+<!--   sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$xprime) -->
+<!-- ) -->
+
+
+<!-- # # r2 change -->
+<!-- # (( -->
+<!-- #   (( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$xprime))-( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$xprime) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$xprime))  -->
+<!-- #   )/(sqrt(pa*pb*(1-pa)*(1-pb))) -->
+<!-- # ))-(( -->
+<!-- #   (( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='B')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='b')$x))-( sum(dplyr::filter(genos,Var1 =='A' & Var2 =='b')$x) * sum(dplyr::filter(genos,Var1 =='a' & Var2 =='B')$x) -->
+<!-- #   ))/(sqrt(pa1*pb1*(1-pa1)*(1-pb1))) -->
+<!-- # )) -->
+
+
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- library(dplyr) -->
+
+<!-- ld3loci(sa=0.2,sb=0.2,sc=0,pa=0.5,pb=0.5,pc=0,Dab=0.05,Dac=0,Dbc=0, whatreturn='Rchange') -->
+<!-- ld3loci(sa= 0.25,sb=0.7,sc=0,pa=0.5,pb=0.5,pc=0,Dab=0.01,Dac=0,Dbc=0, whatreturn='Rchange') -->
+<!-- ld3loci(sa= 0.25,sb=0.7,sc=0,pa=0.5,pb=0.5,pc=0,Dab=0.05,Dac=0,Dbc=0, whatreturn='Rchange') -->
+
+
+<!-- ``` -->
+
