@@ -8,4 +8,4 @@ License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 LinkingTo: Rcpp, 
-Imports: Rcpp, cowplot, ggplot2, shiny, devtools
+Imports: Rcpp, cowplot, ggplot2, shiny, devtools, dplyr
