@@ -1,13 +1,11 @@
-Package: nap
-Title: Non-Additive Polygenic selection: An Bayesian inference approach implemented in C++
+Package: popgensim
+Title: Wright Fisher simulations: C++ implementation with interactive Shiny app visualization
 Version: 0.0.0.9000
 Authors@R: person("Moises", "Exposito-Alonso", email = "moisesexpositoalonso@gmail.com", role = c("aut", "cre"))
-Description: This package carries the data and method from Exposito-Alonso & Nielsen 2018 (unpublised). It comes with population genetic simulations displayed interactively with Shiny.
+Description: This package implements the classic equations of a Wright Fisher population found in any textbookk (e.g. Charlesworth & Charlesworth 2010). For speed efficiency, the implementation was done in C++ utilizing Rcpp. Alghouh simulations can be run independently, the package comes with a Shiny app for interactive plotting, where the different parameters of mutations, selection, migration, and effective population size can be modified.
 Depends: R (>= 3.3.1)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH, bigmemory
-Imports: Rcpp, cowplot, ggplot2, cowplot, shiny, devtools, dplyr, tidyr
-SystemRequirements: C++11
-
+LinkingTo: Rcpp, 
+Imports: Rcpp, cowplot, ggplot2, shiny, devtools
