@@ -8,3 +8,6 @@ src/*.dll
 R/RcppExports.R
 ..Rcheck/
 src/RcppExports.cpp
+src*RcppExports.cpp
+R/RcppExports.R
+src/RcppExports.cpp
