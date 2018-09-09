@@ -5,11 +5,16 @@ Tune the forces of evolution: mutation, migration, selection, and drift (includi
 You can refer to this repository as:
 M. Exposito-Alonso (2017) Wright-Fisher population simulations: a C++ and Shiny app implementation. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1039886.svg)](https://doi.org/10.5281/zenodo.1039886)
 
+\
+
+![Screenshot](Screen\ Shot\ 2018-09-08\ at\ 4.36.48\ PM.png)
+![Screenshot](Screen\ Shot\ 2018-09-08\ at\ 4.37.08\ PM.png)
+
 
 
 # Get it
 
-## Option 1 directly from github
+### Option 1 directly from github
 
 ``` sh
 # Packages required
@@ -32,7 +37,14 @@ git clone https://github.com/MoisesExpositoAlonso/popgensim.git
 
 
 # Run simulations independently of the Shinny app
-Note: You need to download the package before
+Note: You need to do Option 2 before.
+
+``` sh
+cd popgensim
+R
+
+```
+Then inside R:
 
 ```
 # Packages required
