@@ -1,5 +1,4 @@
-# R package with a non-additive multigenic selection
-
+# Interactive shiny R plot of allele frequencies under a Wright-Fisher population
 
 Tune the forces of evolution: mutation, migration, selection, and drift (including also non-random mating); to simulate allele frequencies under the classic population genetics equations.
 
