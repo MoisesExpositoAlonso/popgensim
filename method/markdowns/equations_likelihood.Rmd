@@ -1,0 +1,169 @@
+---
+title: "Multilocus multiplicative fitness: A likelihood approach"
+# subtitle: "EQUATIONS"
+author: "Moi Exposito-Alonso"
+date: '`r Sys.Date()`'
+output:
+  pdf_document:
+  header-inclusdes:
+   - \usepackage{amsmath}
+   - \usepackage{caption}
+   - \usepackage{subcaption}
+   - \usepackage{graphicx}
+  #html_document: default
+  #header-includes:
+  #- \setlength{\parindent}{4em}
+  #- \setlength{\parskip}{0em}
+---
+
+<!-- https://en.wikipedia.org/wiki/Normal_distribution -->
+
+<!-- https://en.wikipedia.org/wiki/Gamma_distribution -->
+
+<!-- https://onlinecourses.science.psu.edu/stat414/node/191 -->
+
+<!-- https://www.statlect.com/fundamentals-of-statistics/normal-distribution-maximum-likelihood -->
+
+<!-- 
+COMMENTS
+
+Use BFGS 
+Maybe visit GUSFIELD in Davis
+
+A poisson or overdispersion likelihood
+-->
+
+<!-- *********************************************************************** -->
+### Genotypes and selection model 
+
+Given two loci, A and B, with alleles A and a, and B and b, there must be nine possible gammetes. If the A allele and B allele are selected with coefficients $s_{A}$ and $s_{B}$, and we assume no dominance and no epistasis, we can write the average fitness per genotype very simply as the haploid model below:
+
+\
+\begin{center}
+\begin{tabular}{ c | c  c}
+     &       B            &     b       \\
+  \hline
+  A & $(1+s_A)(1+s_B) $&$ (1+s_{A}) (1-s_{B})  $\\
+  a & $(1- s_{A})(1+ s_{B})$&$ (1-s_A)(1-s_B)          $
+\end{tabular}
+\end{center}
+\
+
+<!-- \ -->
+<!-- \begin{center} -->
+<!-- \begin{tabular}{ c | c  c} -->
+<!--      &       B            &     b       \\  -->
+<!--   \hline -->
+<!--   A & $(1+s_A)(1+s_B) \times \epsilon $&$ (1+s_{A}) (1-s_{B})  $\\   -->
+<!--   a & $(1- s_{A})(1+ s_{B})$&$ (1-s_A)(1-s_B) \times \epsilon          $     -->
+<!-- \end{tabular} -->
+<!-- \end{center} -->
+<!-- \ -->
+
+<!-- \ -->
+<!-- \begin{center} -->
+<!-- \begin{tabular}{ c | c  c} -->
+<!--      &       B            &     b       \\  -->
+<!--   \hline -->
+<!--   A & $[(1+s_A)(1+s_B)]^{\epsilon} $&$(1+s_{A}) (1-s_{B})  $\\   -->
+<!--   a & $(1- s_{A})(1+ s_{B})$&$ [(1-s_A)(1-s_B)]^{\epsilon}          $     -->
+<!-- \end{tabular} -->
+<!-- \end{center} -->
+<!-- \ -->
+
+From a previous experiment, we have measurements of absolute fitness (percentage of survival x number of offspring) denoted as $y_{abs}$ of length $N \times r$, where $N=515$ is the number of different genotypes and $r=5$ is the number of replicates per genotype. Here we prefer to use relative fitness, taking as reference fitness the average value of the population, $y=y_{abs}/ \bar{y}_{abs}$, so the mean of $y$ will be 1. 
+
+We have whole-genome information for those $N$ genotypes as biallelic SNPs, a total of $p$ loci. The genotypic information is represented in a genome matrix $X$ of $N$ rows and $p$ columns. The genotypes are represented as -1 for homozygotes of the reference allele and +1 for homozygote of the alternative allele (there are no heterozygotes in the dataset but they could be represented as 0). 
+
+Then we can propose that the observed fitness $y$ is a multiplicative function of the selection coefficients at every locus:
+
+$$ y = w(s,X) = \prod_{i=1}^{p} (1+s_i \odot X_{i}) \ $$
+<!-- $$ y = w(s,X,e) = \Big[\prod_{i=1}^{p} (1+s_i \odot X_{i}) \Big]^{e\odot |X_{i}|}  $$ -->
+
+In this function, $X_i$ works as a design matrix, and $\odot$ denotes element-wise multiplication. When the SNP is the alternative, the fitness reported by that snp is $=1+s \times 1$, whereas if it is the reference SNP it would be the opposite, $=1+s \times (-1)$, reducing in this case the mean fitness of 1. 
+
+<!-- ******************************************************************************** -->
+
+### The probabilistic model
+#### Observed fitness
+
+We can assume that the relative fitness $y$ follows an exponential distribution. This is most likely under very selective environments where the mode of fitness is 0.
+
+$$ y  \sim \operatorname{Exp}( \lambda )  $$
+
+The moments:
+
+$$E[y]= \lambda^{-1}$$
+
+$$var(y) = E[y^2]-E[y]= \lambda^2$$
+
+Lambda can be then written in terms of the fitness function dependent on selection coefficients and genotypes:
+
+$$\lambda = \frac{1}{ \prod_{i=1}^{p} (1+s_i \odot X_{i}) } $$
+
+
+The probability density function of the exponential distribution is:
+
+$$f(x) = \lambda \times e^{-\lambda y}$$
+The likelihood function is:
+
+ $$L(\lambda) = \prod_{i=1}^n \lambda \exp(-\lambda x_i) = \lambda^n \exp \left(-\lambda \sum_{i=1}^n x_i\right)=\lambda^n\exp\left(-\lambda n \overline{x}\right) $$
+(The final expression allows me to work directly with means of fitness per genotype instead of with each replicate.)
+
+ $$L(\lambda) = \prod_{i=1}^{p} (1+s_i \odot X_{i}) ^{-n} \exp\left(-\prod_{i=1}^{p} (1+s_i \odot X_{i})n \overline{x}\right) $$
+ 
+
+The derivative of the likelihood function (i.e. gradient in optimization) is :
+
+$${\frac  {{\mathrm  {d}}}{{\mathrm  {d}}\lambda }}\ln(L(\lambda ))={\frac  {{\mathrm  {d}}}{{\mathrm  {d}}\lambda }}\left(n\ln(\lambda )-\lambda n\overline {x}\right)={\frac  {n}{\lambda }}-n\overline {x}\ {\begin{cases}>0,&0<\lambda <{\frac  {1}{\overline {x}}},\\[8pt]=0,&\lambda ={\frac  {1}{\overline {x}}},\\[8pt]<0,&\lambda >{\frac  {1}{\overline {x}}}.\end{cases}} $$
+
+ 
+
+
+<!-- We can assume the data $y$ follows a Gamma distribution. This will depend on genome-wide selection coefficients, and a given genotype. Therefore, we can think of this as each genotype having a  -->
+
+<!-- $$ y  \sim \operatorname{\Gamma}( \alpha, \beta )  $$ -->
+<!-- The moments are: -->
+<!-- $$ E[y] = \alpha / \beta = k\theta   $$ -->
+
+<!-- $$ Var(y) = E[y^2]-E[y]^2 = \alpha / \beta^2 = k\theta^2 $$ -->
+
+<!-- The probability density function of Gamma in terms of $k$ and $\theta$ is: -->
+
+<!-- $$f(y) = \frac{1}{\Gamma(k) \theta^{k}} y^{k-1} e^{-\frac{y}{\theta}}$$ -->
+
+<!-- In log form this can be written as: -->
+
+
+<!-- $$\ln f(y) = (k-1) \ln(y) {-\frac{y}{\theta}} - \ln \Gamma(k) - k \ln \theta  $$ -->
+<!-- This can be calculated for a given genotype. -->
+
+
+<!-- ******************************************************************************** -->
+
+
+### Finally full likelihood function
+
+This is the function to be minimized through a numerical optimization algorithm, the L-BFGS.
+$$ - \ln \ell(\vec{s}) = - \sum_{h\  \in\  haps.} \ln P(y_h | \vec{s},X_h)$$
+And the gradient to inform the optimization would be:
+$$ gr(\vec{s}) = N^{-1} \sum_{h\  \in\  haps.} P(y_h | \vec{s},X_h)$$
+
+
+The greatest difficulty here is that the algorithm needs to search a $p$ dimension space ($p$ equals to number of SNPs).
+
+
+ 
+$$ \frac{n}{\lambda } - n \overline{x} $$
+
+
+<!-- $$\ell(e,\alpha_s, \beta_s) = \prod_{h\  \in\  haps.} \sum_{m \in K} f(y_h | s_i, e)f(s_i | \alpha_s, \beta_s) $$ -->
+
+
+<!-- If we wanted to apply this to dense data, we can use some regulaization. $L_1= \lambda ||w||_1$, $L_2=\lambda ||w||_2^2$ norms, or a combination, $L_{12} = \lambda( m ||w||_1 + (1-m) ||w||_{2}^{2}), m \in [0,1]$ typically used from regression approaches could be used. A plane $L_0$ norm equal to the total number of non-zero coefficients could be adapted to the percentage of non-zero values thus $L_0 \in [0,1]$, which in log would be of the same scale as the likelihood function.  -->
+
+<!-- $$ - \ln \ell(\vec{s}, e)  \ \ +  \ln (L_{0})$$ -->
+
+
+
+

@@ -1,0 +1,46 @@
+---
+title: "latex equations"
+# subtitle: "EQUATIONS"
+author: "Moi Exposito-Alonso"
+# date: '`r Sys.Date()`'
+output:
+  pdf_document:
+  header-inclusdes:
+   - \usepackage{amsmath}
+   - \usepackage{caption}
+   - \usepackage{subcaption}
+   - \usepackage{graphicx}
+  #html_document: default
+  #header-includes:
+  #- \setlength{\parindent}{4em}
+  #- \setlength{\parskip}{0em}
+---
+
+
+<!-- $$\ln P(Y | \vec{s},\pi,c,X) = \Bigg\{ \begin{tabular} $$ -->
+
+<!-- $$ -->
+<!-- \ln P(Y | \vec{s},\pi,c,X) = -->
+<!--  \{ -->
+<!--   \begin{tabular}{c} -->
+<!--   if x=0; \theta \\ -->
+<!--   if x>0; 1 -->
+<!--   \end{tabular} -->
+<!--  \} -->
+<!-- $$ -->
+
+
+$$
+    f(x)= 
+\begin{cases}
+    \pi + (1-\pi) \  \text{CDF}(\hat{y},\hat{y}c; 0) & \text{if } y = 0\\
+    (1-\pi)\ \text{PDF}(\hat{y},\hat{y}c)              & \text{if} y>0
+\end{cases}
+$$
+
+
+$$Y  \sim   \pi  \mathcal{N} ( \hat{y}_h , \hat{y}_h c) + (1-\pi) \delta_0$$
+
+$$dif = \frac{\sum y}{n0} - \frac{\sum y}{ n1}  = n1 \sum y0 - n0 \sum y1 = \sum y \  x \times n \ x $$
+
+

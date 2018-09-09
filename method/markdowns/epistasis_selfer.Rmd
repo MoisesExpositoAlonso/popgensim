@@ -1,0 +1,71 @@
+
+---
+title: "Lilelihood: observed fitness, selection and epistasis"
+# subtitle: "EQUATIONS"
+author: "Moi Exposito-Alonso"
+# date: '`r Sys.Date()`'
+output:
+  pdf_document:
+  header-inclusdes:
+   - \usepackage{amsmath}
+   - \usepackage{caption}
+   - \usepackage{subcaption}
+   - \usepackage{graphicx}
+  #html_document: default
+  #header-includes:
+  #- \setlength{\parindent}{4em}
+  #- \setlength{\parskip}{0em}
+---
+
+
+$$P(AABB)_{out}= 0.2^2 \times (1/1) + 2 \times 0.2 \times 0.8 \times (1/16) + 0.8^2 \times (0/1) = 0.06$$
+
+$$P(AABB)_{self}= 0.99  + 0.01 \times P(AABB)_{out} = 0.99006$$
+
+
+
+```{r}
+# For one pop of N=100 with 2 genotypes of 2 loci
+# With random mating in 1 genation homozyotes carrying an epistasis?
+
+0.2^2 * (1/1) + 2 * 0.2 *0.8 * (1/16) + 0.8^2 * (0/1)
+
+0.99 + 0.001 * ( 0.2^2 * (1/1) + 2 * 0.2 *0.8 * (1/16) + 0.8^2 * (0/1))
+
+0.99+0.01
+  
+
+pABAB=0.2
+pabab=0.8
+
+
+
+ABAB = pABAB^2 + (pabab) * (1/16)
+ABAB
+
+ABAB = 0.99 + 0.001 * (pABAB^2 + pabab * (1/16) )
+ABAB
+
+ABAB
+
+# 
+# pAb=0.25
+# paB=0.25
+# pab=0.25
+# 
+# pAB*pAB + 2*pAb*paB *1/4
+# 
+# pAB*pAB + 2*pAb*paB *3/4 + 2*pab*paB*1/4 + 2*pab*pAb*1/4 + 2*pab*pAB*1/2
+# 
+# 
+# pAB*pAB + 2*pAb*paB + 2*pab*paB + 2*pab*pAb + 2*pab*pAB +
+# 
+# expand.grid(vector('pAB','pAb','paB','pab'),c('pAB','pAb','paB','pab')  )
+# 
+# 1-(pab^2)
+# 
+# 0.98 + 0.02*(pAB*pAB + 0.02*pAb*paB *1/4)
+
+
+
+```

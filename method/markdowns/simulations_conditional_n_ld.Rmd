@@ -1,0 +1,113 @@
+---
+title: "Genome-Wide selection"
+subtitle: "Application to real data"
+author: "Moi Exposito-Alonso"
+date: '`r Sys.Date()`'
+output:
+  pdf_document:
+  header-inclusdes:
+   - \usepackage{amsmath}
+   - \usepackage{caption}
+   - \usepackage{subcaption}
+   - \usepackage{graphicx}
+---
+
+
+<!--   html_document: default -->
+<!--   header-includes: -->
+<!--   - \setlength{\parindent}{4em} -->
+<!--   - \setlength{\parskip}{0em} -->
+
+
+*****
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE)
+set.seed(1)
+```
+
+
+```{r packages, include=FALSE}
+## Load packages
+library(devtools)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(xtable)
+
+devtools::load_all('.')
+# library('gws')
+library(moiR)
+# library(bigsnpr)
+# library(bigstatsr)
+
+```
+ 
+
+## Define genome matrix
+
+```{r,include=FALSE}
+### high and low LD
+# Right now only the selected ones
+
+X<- get_topSNPs()
+X[1:5,1:5]
+
+```
+
+# How well models predict true effects
+```{r,include=FALSE}
+
+### sparse and gaussian
+
+### additive and epistatic
+
+Yl<-list(sparse=list(add= simupheno(X,sparsity=0.95)
+                     ,epi=simupheno(X,sparsity=0.95,epistasis = 2)
+                      ),
+         gaussian=list(add= simupheno(X,sparsity=0.5)
+                       ,epi=simupheno(X,sparsity=0.5,epistasis = 2)
+                       ))
+Yl
+
+
+```
+
+## 95% sparse effects additive
+### How good the selection estimates predict the individual fitness
+```{r,echo=FALSE ,fig.height=5,fig.width=5,message=FALSE}
+
+sa<-data.frame( true=Yl$sparse$add$eff,
+                        bgwa=gwa(X,Yl$sparse$add$Y),
+                        b=cgwa(X,Yl$sparse$add$Y),
+                        bridge=ridgegwa(X,Yl$sparse$add$Y,type='penalized'),
+                        blasso=lassogwa(X,Yl$sparse$add$Y)
+                        )
+
+
+p1<-(ggdotscolor(sa$true,sa$bgwa, ylab='True effect',xlab='Inferred effect',color='grey70') %>% addggregression(se=F,lty='dashed') )+ggtitle("Marginal")
+p2<-(ggdotscolor(sa$true,sa$b, ylab='True effect',xlab='Inferred effect',color='grey70') %>% addggregression(se=F,lty='dashed') )+ggtitle("Conditional")
+p3<-(ggdotscolor(sa$true,sa$bridge, ylab='True effect',xlab='Inferred effect',color='grey70') %>% addggregression(se=F,lty='dashed') )+ggtitle("Ridge")
+p4<-(ggdotscolor(sa$true,sa$blasso, ylab='True effect',xlab='Inferred effect',color='grey70') %>% addggregression(se=F,lty='dashed') )+ggtitle("Lasso")
+
+plot_grid(p1,p2,p3,p4)
+
+```
+
+### How well the likelihood inference approach from LD matrix works
+
+```{r}
+
+LDobs<-ldCnext(X,Yl$sparse$add$Y) %>% cleanld()
+hist(LDobs)
+
+res<-optim(par = c(1,sa$bridge),
+      fn = ld.lik,
+      y=LDobs,
+      method="BFGS")
+
+
+```
+

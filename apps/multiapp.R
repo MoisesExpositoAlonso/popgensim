@@ -11,8 +11,7 @@ devtools::load_all(".")
 myserver<-function(input, output) {
 
 p <- reactive({
-  # popgensim::allelesim(
-  popgensim::multievo(
+    multievo(
                       p=as.numeric(input$p),
                       n=as.numeric(input$n),
                       rate=as.numeric(input$rate),
@@ -70,9 +69,8 @@ sidebarPanel(
 ),sidebarPanel(
   "Drift",
     sliderInput("d", "Drift coefficient: d", min=0, max=1, value=0.7, step=0.01),
-    sliderInput("No", "Initial population size: N0", min=1, max=1e6, value=1000, step=10),
-    sliderInput("Nmax", "Carrying capacity: Nmax", min=100, max=1e6, value=1e6, step=100)
-
+    sliderInput("No", "Initial population size: N0", min=1, max=1e6, value=100000, step=10),
+    sliderInput("Nmax", "Carrying capacity: Nmax", min=1, max=1e6, value=1e6, step=100)
 ),sidebarPanel(
     sliderInput("tmax", "Number of generations:", min=1, max=50, value=5, step=1),
     sliderInput("Replicates", "Number of replicates:", min=1, max=100, value=50, step=1)

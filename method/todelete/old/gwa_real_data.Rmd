@@ -1,0 +1,282 @@
+---
+title: "Meta-analysis model for Genome-Wide Selection"
+subtitle: "Application to real data"
+author: "Moi Exposito-Alonso"
+date: '`r Sys.Date()`'
+output:
+  html_document: default
+  header-includes:
+  - \setlength{\parindent}{4em}
+  - \setlength{\parskip}{0em}
+---
+
+*****
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(1)
+```
+
+
+```{r packages, include=FALSE}
+## Load packages
+library(devtools)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(xtable)
+
+load_all('.')
+# library('gws')
+library(moiR)
+library(bigsnpr)
+library(bigstatsr)
+
+```
+
+```{r}
+#define the top SNPs
+gwares<-readRDS('dataint/Fitness_mli.rda')
+
+# window=100000
+# 150e6 /window
+# gwares$roundpos<- window*round(gwares$pos/window)
+#
+# head(gwares)
+#
+# gwares%>%
+#   group_by(roundpos) %>%
+#   summarize(chr = which(p-) )
+#
+
+subg<-gwares[which(gwares$p_lrt < sort(gwares$p_lrt)[1000]),]
+head(subg)
+subg$rs<-paste(subg$chr,subg$pos,sep='_')
+
+
+# dim(gwares)
+# dim(G)
+
+```
+
+# Application with simulated genotype and phenotype data
+## 1 Subset random positions 
+```{r}
+### Real data
+# genomes<-readRDS("genome.rda")
+# data(genomes)
+
+G <- genomes$genotypes
+Map <- genomes$map
+head(Map)
+Map$rs<-paste(Map$chr,Map$physical.pos,sep='_')
+Map$order<-1:nrow(Map)
+
+matched<-merge(Map, subg, by='rs')
+dim(matched)  
+head(matched)
+
+X.top=inputena.mat(G[,matched$order])
+N.top=nrow(X.top)
+M.top=ncol(X.top)
+
+qplot(fn(X.top), xlab="allele dossage",main="")
+ 
+# X.random = inputena.mat(G[,sample(1:ncol(G),size = 600)])
+# N=nrow(X.random)
+# M=ncol(X.random)
+# 
+# 
+# X.random = inputena.mat(G[,sample(1:ncol(G),size = 600)])
+# N=nrow(X.random)
+# M=ncol(X.random)
+
+qplot(fn(X.random), xlab="allele dossage",main="")
+
+```
+
+## 2 Association with real fitness in the Field
+### Get phenotypes from Field
+```{r}
+data(dry)
+
+Y=merge(genomes$fam,by.x="sample.ID", dry[,c("id","Fitness_mli")], by.y="id",all.x=T)[,7]
+Y=relative(Y)
+Y = meanvarcent(Y)
+qplot(Y,geom="histogram",main="Fitness Madrid drought")
+Y.bad=Y
+Y.bad[is.na(Y.bad)]<-mean(Y.bad,na.rm=TRUE) # Mean impute
+
+# # Y=merge(genomes$fam,by.x="sample.ID", dry[,c("id","Survival_fruit_thi")], by.y="id",all.x=T)[,7]
+# # Y=merge(genomes$fam,by.x="sample.ID", dry[,c("id","Flowering_time_thi")], by.y="id",all.x=T)[,7]
+# Y=merge(genomes$fam,by.x="sample.ID", dry[,c("id","Fitness_thi")], by.y="id",all.x=T)[,7]
+# Y=relative(Y)
+# Y = meanvarcent(Y)
+# qplot(Y,geom="histogram",main="Fitness Tübingen water")
+# Y.good=Y
+# Y.good[is.na(Y.good)]<-mean(Y.good,na.rm=TRUE) # Mean impute
+
+
+```
+
+## 3 Calculate coefficients
+```{r}
+bgwa.bad=gws::gwa(X.random,Y.bad)
+b.bad=gws::cgwa(X.random,Y.bad)
+blasso.bad=gws::lassogwa(X.random,Y.bad)
+bridge.bad=gws::ridgegwa(X.random,Y.bad)
+
+bgwa.bad=gws::gwa(X.top,Y.bad)
+b.bad=gws::cgwa(X.top,Y.bad)
+blasso.bad=gws::lassogwa(X.top,Y.bad)
+bridge.bad=gws::ridgegwa(X.top,Y.bad)
+
+X=X.top
+Y=Y.bad
+
+
+lambda=0
+X.=meanvarcent.mat(X.top)
+# b.ridge= MASS::ginv(t(X.)%*%X. + lambda*(1-normalize(b.)) *diag(M.top))  %*% t(X.) %*% Y
+
+bgwa=gws::gwa(X.top,Y.bad)
+b.= MASS::ginv(t(X.)%*%X. )  %*% t(X.) %*% Y
+b.001= MASS::ginv(t(X.)%*%X. + 0.001 *diag(M.top))  %*% t(X.) %*% Y
+b.01= MASS::ginv(t(X.)%*%X. + 0.01 *diag(M.top))  %*% t(X.) %*% Y
+b.0.1= MASS::ginv(t(X.)%*%X. + 0.1 *diag(M.top))  %*% t(X.) %*% Y
+b.1= MASS::ginv(t(X.)%*%X. + 1 *diag(M.top))  %*% t(X.) %*% Y
+b.10= MASS::ginv(t(X.)%*%X. + 10 *diag(M.top))  %*% t(X.) %*% Y
+b.100= MASS::ginv(t(X.)%*%X. + 100 *diag(M.top))  %*% t(X.) %*% Y
+
+b.ridge= MASS::ginv(t(X.)%*%X. + 100*(normalize(abs(b.))) *diag(M.top))  %*% t(X.) %*% Y
+b.ridgeLD= MASS::ginv(t(X.)%*%X. + 100*(normalize(abs(bgwa-b.))) *diag(M.top))  %*% t(X.) %*% Y
+
+plot(1-normalize(logistic(normalize(abs(b.)),k=5)),x=normalize(abs(b.)))
+
+
+plot(1-normalize(logistic(normalize(abs(b.)),k=10e6,x0 = 0.01)),x=normalize(abs(b.)))
+
+b.ridgex= MASS::ginv(t(X.)%*%X. + 1000*(1-normalize(logistic(normalize(abs(b.)),k=10e6,x0 = 0.5))) *diag(M.top))  %*% t(X.) %*% Y
+
+
+plot(b.,b.100, ylim=c(-0.2,+0.2),xlim=c(-0.2,+0.2))
+points(b.,b.10,col='blue')
+points(b.,b.1,col='green')
+points(b.,b.0.1,col='red')
+# points(b.,b.01,col='orange')
+# points(b.,b.001,col='orange')
+points(b.,b.ridge,col='orange')
+# points(b.,b.ridgeLD,col='purple')
+points(b.,b.ridgex,col='purple')
+# points(b.,b.lasso,col='brown')
+abline(b = 1,a = 0)
+
+plot(b.ridge,b.ridgex)
+
+
+  
+# To be able to have a meaninful prediction using the cond I need leave one out 
+# Y.cond= sapply(1:N,function(i){
+#   bs=cgwa(X.random[-i,], Y.bad[-i])
+#   Ytmp=meanvarcent.mat(X.random)[i,] %*% bs
+#   return(Ytmp)
+# })
+# 
+# save(file='dataint/Y.cond.rda',Y.cond)
+# load('../dataint/Y.cond.rda')
+
+# load('dataint/Y.cond.rda')
+load('../dataint/Y.cond.rda')
+
+# trick to get if faster, do not fit one individual
+# bs=cgwa(X.random[-i,], Y.bad[-i])
+# Y.cond2=meanvarcent.mat(X.random) %*% bs
+
+```
+
+## 5 Prediction of phenotype
+
+```{r}
+
+toplot=data.frame(Y=Y.bad, 
+                  Y.cond=Y.cond,
+                  # Y.cond=Y.cond2, 
+                  Y.marg=(meanvarcent.mat(X.random) %*% bgwa.bad),
+                  Y.lasso=(meanvarcent.mat(X.random) %*% blasso.bad)
+                  )
+
+ggplot(toplot)+
+         geom_point(aes(x=Y,y=Y.cond),color="red",alpha=0.2)+ stat_smooth(aes(x=Y,y=Y.cond),color='red')+
+         geom_point(aes(x=Y,y=Y.marg),color="black",alpha=0.2)+stat_smooth(aes(x=Y,y=Y.marg),color='black')+
+         geom_point(aes(x=Y,y=Y.lasso),color="blue",alpha=0.2)+stat_smooth(aes(x=Y,y=Y.lasso),color='blue')+
+                  geom_abline(slope = 1,intercept = 0)+
+  xlab("Real phenotype")+
+  ylab("Predicted phenotype") 
+
+
+```
+
+```{r,fig.width=10}
+p1<-ggplot(toplot)+
+         geom_point(aes(x=Y,y=Y.cond),color="red",alpha=0.2)+ stat_smooth(aes(x=Y,y=Y.cond),color='red')+
+                  geom_abline(slope = 1,intercept = 0)+
+  xlab("Real phenotype")+
+  ylab("Predicted phenotype") 
+
+p2<-ggplot(toplot)+
+                  geom_point(aes(x=Y,y=Y.marg),color="black",alpha=0.2)+stat_smooth(aes(x=Y,y=Y.marg),color='black')+
+                  geom_abline(slope = 1,intercept = 0)+
+  xlab("Real phenotype")+
+  ylab("Predicted phenotype") 
+
+p3<-ggplot(toplot)+
+geom_point(aes(x=Y,y=Y.lasso),color="blue",alpha=0.2)+stat_smooth(aes(x=Y,y=Y.lasso),color='blue')+
+                  geom_abline(slope = 1,intercept = 0)+
+  xlab("Real phenotype")+
+  ylab("Predicted phenotype") 
+
+
+plot_grid(p1,p2,p3,ncol=3)
+
+```
+
+Note: the phenotype prediction in the conditional GWA was done using leave-one-out procedure.
+
+<!-- ```{r} -->
+
+<!-- p1<-(ggdotscolor(bgwa.bad,b.bad) +xlim(c(-0.2,0.2))+ylim(c(-0.2,0.2)) ) %>% addggregression(se=FALSE) -->
+<!-- p2<-(ggdotscolor(bgwa.good,b.good)+xlim(c(-0.2,0.2))+ylim(c(-0.2,0.2)) ) %>% addggregression(se=FALSE) -->
+<!-- p3<-(ggdotscolor(b.bad,b.good)+xlim(c(-0.2,0.2))+ylim(c(-0.2,0.2)) )%>% addggregression(se=FALSE) -->
+<!-- p4<-(ggdotscolor(bgwa.bad,bgwa.good)+xlim(c(-0.2,0.2))+ylim(c(-0.2,0.2)) )%>% addggregression(se=FALSE) -->
+
+<!-- plot_grid( -->
+<!-- p1, -->
+<!-- p2, -->
+<!-- p3, -->
+<!-- p4  -->
+<!-- ) -->
+
+<!-- plot_grid( -->
+<!-- qplot(b.bad) , -->
+<!-- qplot(b.good) , -->
+<!-- qplot(bgwa.bad) , -->
+<!-- qplot(bgwa.good)  -->
+<!-- ) -->
+
+<!-- ``` -->
+
+<!-- ## 4 Visualize differences in \beta estimates -->
+
+<!-- ```{r} -->
+
+<!-- d=data.frame(b.bad,b.good,bgwa.bad,bgwa.good) -->
+<!-- d$position=1:nrow(d) -->
+
+<!-- ggplot(d) + geom_line(aes(y=abs(bgwa.bad),x=position),color="black",alpha=0.5) + geom_line(aes(y=abs(b.bad),x=position),color="red",alpha=0.5) +  ylab(expression(paste("Absolute ",beta))) -->
+
+<!-- ggplot(d) + geom_line(aes(y=abs(bgwa.bad),x=position),color="black",alpha=0.5) + geom_line(aes(y=abs(b.bad),x=position),color="red",alpha=0.5) +  ylab(expression(paste("Absolute ",beta)))+ -->
+<!--   xlim(c(0,100)) -->
+
+
+<!-- ``` -->

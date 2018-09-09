@@ -1,0 +1,213 @@
+---
+title: "Lilelihood of observed fitness given selection and epistasis"
+# subtitle: "EQUATIONS"
+author: "Moi Exposito-Alonso"
+date: '`r Sys.Date()`'
+output:
+  pdf_document:
+  header-inclusdes:
+   - \usepackage{amsmath}
+   - \usepackage{caption}
+   - \usepackage{subcaption}
+   - \usepackage{graphicx}
+  #html_document: default
+  #header-includes:
+  #- \setlength{\parindent}{4em}
+  #- \setlength{\parskip}{0em}
+---
+
+<!-- https://en.wikipedia.org/wiki/Normal_distribution -->
+
+<!-- https://en.wikipedia.org/wiki/Gamma_distribution -->
+
+<!-- https://onlinecourses.science.psu.edu/stat414/node/191 -->
+
+<!-- https://www.statlect.com/fundamentals-of-statistics/normal-distribution-maximum-likelihood -->
+
+<!-- 
+COMMENTS
+
+Use BFGS 
+Maybe visit GUSFIELD in Davis
+
+A poisson or overdispersion likelihood
+-->
+
+<!-- *********************************************************************** -->
+### Genotypes and selection model 
+
+Given two loci, A and B, with alleles A and a, and B and b, there must be nine possible gammetes. If the A allele and B allele are selected with coefficients $s_{A}$ and $s_{B}$, and we assume no dominance and no epistasis, we can write the average fitness per genotype. For simplicity we use an haploid model, which would be similar to the diploid homozygotes case (also the case of highly self-fertilizing species):
+
+<!-- \ -->
+<!-- \begin{center} -->
+<!-- \begin{tabular}{ c | c  c} -->
+<!--      &       B            &     b       \\  -->
+<!--   \hline -->
+<!--   A & $(1+s_A)(1+s_B) $&$ (1+s_{A}) (1-s_{B})  $\\   -->
+<!--   a & $(1- s_{A})(1+ s_{B})$&$ (1-s_A)(1-s_B)          $     -->
+<!-- \end{tabular} -->
+<!-- \end{center} -->
+<!-- \ -->
+
+<!-- \ -->
+<!-- \begin{center} -->
+<!-- \begin{tabular}{ c | c  c} -->
+<!--      &       B            &     b       \\  -->
+<!--   \hline -->
+<!--   A & $(1+s_A)(1+s_B) \times \epsilon $&$ (1+s_{A}) (1-s_{B})  $\\   -->
+<!--   a & $(1- s_{A})(1+ s_{B})$&$ (1-s_A)(1-s_B) \times \epsilon          $     -->
+<!-- \end{tabular} -->
+<!-- \end{center} -->
+<!-- \ -->
+
+\
+\begin{center}
+\begin{tabular}{ c | c  c}
+     &       B            &     b       \\ 
+  \hline
+  A & $[(1+s_A)(1+s_B)]^{\epsilon} $&$ [(1+s_{A}) (1-s_{B})]^e  $\\  
+  a & $[(1- s_{A})(1+ s_{B})]^e$&$ [(1-s_A)(1-s_B)]^{\epsilon}          $    
+\end{tabular}
+\end{center}
+\
+
+
+We could then expect that the observed fitness $y$ of one of $N$ number of haplotype of $p$ loci is expressed as:
+
+
+$$ y = \Big[\prod_{i=1}^{p} (1+s_i \odot X_{i}) \Big] ^e  $$
+
+<!-- \circ -->
+
+<!-- *********************************************************************** -->
+### The probabilistic model
+
+We can assume the data $y_h$ follows a Gamma distribution (typically with $\alpha$ and $beta$ parameters or $\alpha = k$ and $\theta = 1/\beta$), 
+
+$$ y  \sim \Gamma ( \alpha , \beta )  $$
+
+
+The first moment is:
+
+$$ E[y] = \alpha / \beta =1  $$
+
+Thus, $\alpha = \beta$ so we use instead $\sigma$. This special type of $\Gamma$ distribution will always generate a distribution whose mean is in 1, as any relative fitness situation. What contains the information is the shape of the gamma distribution, hence our use of $\sigma$.
+
+The second moment is then:
+
+$$ Var(y) =  \alpha / \beta^2 = \sigma^{-1}   $$
+
+
+In order to show that this distribution is appropriate, here are two relative fitnesses, in Madrid under drought and high water conditions. Only by moving $\sigma$ we obtain almot perfect fit.
+
+```{r,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE,results='hide',fig.width=4,fig.align='center'}
+require(ggplot2)
+require(cowplot)
+require(latex2exp)
+require(dplyr)
+require(gws)
+
+# for(sig in c(0.001,seq(0.01,5,length.out = 10) )){
+#   if(sig==0.01){
+#     myplot<-qplot(rgamma(100000,shape=sig,rate = sig),geom='density')
+#   }else{
+#     myplot<-myplot+geom_density(data=data.frame(x=rgamma(100000,shape=sig,rate = sig)), aes(x=x))
+#   }
+# }
+
+Yi=dry$Fitness_mli %>% relative
+Yp=dry$Fitness_mlp %>% relative
+Yi=dry$Fitness_mhp %>% relative
+
+set.seed(1)
+ggplot(data=data.frame(Yi,Yp)) +
+  geom_density(data=data.frame(x=rgamma(515,shape=7,rate = 7)), aes(x))+
+  geom_density(data=data.frame(x=rgamma(515,shape=0.3,rate = 0.3)), aes(x))+
+  geom_density(aes(x=Yp),fill=transparent('firebrick3'),color=transparent('black',0))+
+  geom_density(aes(x=Yi),fill=transparent('navy'),color=transparent('black',0))+
+  xlab('relative fitness')+
+  ggtitle(TeX( 'with $\\sigma = 0.3$ and 6 for $\\Gamma$ distribution'))
+  # geom_density(data=data.frame(x=rgamma(515,shape=0.5,rate = 0.5)), aes(x))+
+
+
+```
+
+
+Then, we express $\sigma$ in terms of selection coefficients and the epistatic term:
+
+$$ Var(y) = E[(y -E[y])]^2  =E[y^2] - E[y]^2 = E[y^2] $$
+$$ = N^{-1}\  sum \Big\{   \prod_{i=1}^{p} (1+s_i \odot X_i) ^{2e}  \Big\} - 1= \frac{1}{\sigma}$$
+
+$$ \sigma = \frac{N}{ sum \Big\{   \prod_{i=1}^{p} (1+s_i \odot X_i) ^{2e}  \Big\}} -1    $$
+
+The probability density function of Gamma in terms of $k$ and $\theta$ is:
+
+$$f(y) = \frac{1}{\Gamma(k) \theta^{k}} y^{k-1} e^{-\frac{y}{\theta}}$$
+In log form this can be written as:
+
+
+$$\ln f(y) = (k-1) \ln(y) {-\frac{y}{\theta}} - \ln \Gamma(k) - k \ln \theta  $$
+What in terms of $\sigma$ can be written as:
+
+$$\ln f(y) = (\sigma-1) \ln(y) - y\sigma - \ln \Gamma(\sigma) + \sigma \ln (\sigma )$$
+The derivative of this function, needed as gradient for the optimization is:
+
+$$\ln f(y) = (\sigma-1) \ln(y) - y\sigma - \ln \Gamma(\sigma) + \sigma \ln (\sigma )$$
+
+
+Then we can generate the full log likelihood in terms of the selection coefficients, epistatic term, and genotypes by substituting $\sigma$ in the above equation (not shown).
+
+<!-- \begin{align} -->
+<!--    -\ln \ell (\vec{s},e) &= - \sum_{h \in haps.} \Bigg[ -->
+<!--               (\frac{1}{ \prod_{i=1}^{p} (1+s_i X_{h,i}) ^{2e}- 1} -1) \ln(y) -  \nonumber \\ -->
+<!--       & \qquad \qquad  \frac{y}{ \prod_{i=1}^{p} (1+s_i X_{h,i}) ^{2e}- 1}  -  \nonumber \\ -->
+<!--       & \qquad \qquad  \ln \Gamma(\frac{1}{ \prod_{i=1}^{p} (1+s_i X_{h,i}) ^{2e}- 1} ) -  \nonumber \\ -->
+<!--       & \qquad \qquad  \frac{1}{ \prod_{i=1}^{p} (1+s_i X_{h,i}) ^{2e}- 1} \ln (\prod_{i=1}^{p} (1+s_i X_{h,i}) ^{2e}- 1 ) -->
+<!--               \Bigg] \nonumber -->
+<!-- \end{align} -->
+
+
+We can express this likelihood for the sake of simplicity as:
+
+
+$$ - \ln \ell(\vec{s}, e) = - \ln f(y_h \ ; \sigma )$$
+
+If we wanted to apply this to dense data, we can use some regulaization. $L_1= \lambda ||w||_1$, $L_2=\lambda ||w||_2^2$ norms, or a combination, $L_{12} = \lambda( m ||w||_1 + (1-m) ||w||_{2}^{2}), m \in [0,1]$ typically used from regression approaches could be used. A plane $L_0$ norm equal to the total number of non-zero coefficients could be adapted to the percentage of non-zero values thus $L_0 \in [0,1]$, which in log would be of the same scale as the likelihood function. 
+
+$$ - \ln \ell(\vec{s}, e)  \ \ +  \ln (L_{0})$$
+
+
+
+<!-- And the negative log likelihood: -->
+
+<!-- $$ \ell (k,\theta )=(k-1)\sum _{i=1}^{N}\ln {(x_{i})}-\sum _{i=1}^{N}{\frac {x_{i}}{\theta }}-Nk\ln(\theta )-N\ln(\Gamma (k)) $$ -->
+<!-- Which in terms of $\sigma$ can be writen as: -->
+
+<!-- $$ \ell (\sigma)=(\sigma-1)\sum _{i=1}^{N}\ln {(x_{i})}-\sum _{i=1}^{N}{x_{i}\sigma}-N \sigma \ln(\sigma^{-1} )-N\ln(\Gamma (\sigma)) $$ -->
+
+<!-- And because $\sigma$ is a function of the genotypes, selection coefficients, and epistatic term, we can substite it and generate the full likelihood: -->
+
+
+<!-- \begin{align} -->
+<!--    \ell (s,e) &=\prod_{h \in haps.}^{N} \Bigg[ -->
+<!--               & (\frac{1}{ \prod_{i=1}^{p} (1+s_i X_{h,i}) ^{2e}- 1}-1) \sum_{i=1}^{N}\ln {(y_{i})}- \\ -->
+<!--               & \sum_{i=1}^{N}{\frac{y_{i}}{ \prod_{i=1}^{p} (1+s_i X_{h,i}) ^{2e}- 1}} - \\ -->
+<!--               & \frac{N}{ \prod_{i=1}^{p} (1+s_i X_{h,i}) ^{2e}- 1} \ln(\prod_{i=1}^{p} (1+s_i X_{h,i}) ^{2e}- 1)- \\ -->
+<!--               & N\ln(\Gamma (\frac{1}{ \prod_{i=1}^{p} (1+s_i X_{h,i}) ^{2e}- 1}))  \Bigg] -->
+<!-- \end{align} -->
+
+
+
+### Extension where $e$ is a random variable (needs to be worked out)
+
+An important extension of this method would be to instead of estimating a common epistatic term for the whole genome, we infer its ditribution.
+
+To do that we integrate the likelihood over the distribution of e given some parameters $\theta_e$ of such distribution with known probability denstiy function.
+
+
+$$ \ln \ell(\vec{s},\theta_e ) = \int_{-\inf}^{+\inf}  \ln \ell(\vec{s}, e) f(e; \theta_e) de $$
+
+Or for feasibility, the $e$ distribution can be bined in equal sizes and approximate:
+
+$$ \ln \ell(\vec{s},\theta_e ) \approx \sum_{m \in e \ bins}  \ln \ell(\vec{s}, e) P(e; \theta_e)  $$
+The distribution of $e$ should be optimally a [conjugate](https://en.wikipedia.org/wiki/Conjugate_prior) of the likelihood.

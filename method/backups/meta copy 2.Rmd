@@ -1,0 +1,316 @@
+---
+title: "Meta-analysis model for Genome-Wide Selection"
+author: "Moi Exposito-Alonso"
+date: '`r Sys.Date()`'
+output:
+  html_document: default
+  header-includes:
+  - \setlength{\parindent}{4em}
+  - \setlength{\parskip}{0em}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(1)
+```
+
+
+```{r packages, include=FALSE}
+## Load packages
+library(devtools)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(xtable)
+
+load_all('.')
+# library('gws')
+library(moiR)
+library(bigsnpr)
+library(bigstatsr)
+
+```
+
+# The problem and the model
+
+Given a genotyped population of $N$ individuals and $M$ SNPs, we have the $X$ matrix. From $X$ this matrix we can obtain the covariance matrix $V$ between all SNPs as $\frac{1}{N} X^T X$, i.e. the linkage disequilibrium matrix. The diagonal of this matrix is $D$.
+
+For this population of genotypes, we have a Normally distributed phenotype $Y$. Thus, a regular multivariate linear model can be written as $Y = X\beta + \epsilon$, and the $\beta$ is tipically solved in GWA studies marginally as $\beta_m = (X^TX)^{-1} X^T Y$. The problem comes when the different SNPs are not independent variables. In such case, marginal effects will not reflect true effects. Biologically, this is because of a linkage dissequilibrium confounder.
+
+A trivial model extension can be done in the framework of multiple regression. The \beta effects can be estimated accounting for the $V$ covariance matrix as: $\beta = (X^TX)^{-1} V^{-1} X^T Y$. This can be also estimated directly from the marginal effects as: $\beta=V^{-1}D\beta_m$. 
+
+The above development requires a invertible $V$. This is not possible when there are SNPs in complete linkage or when the number of SNPs is larger than the number of individuals, because $V$ is rank deficient. In such case, an approximation of the inverted matrix could be achieved by several options. The algorithm of Higham to find the nearest positive definite matrix, would find, by definition, the closest invertible matrix. Choleschy factorization can help but not always. Finally, we can use the Moore-Penrose generalized inverse of a matrix. 
+
+
+
+*****
+# Application with simulated genotype and phenotype data
+
+```{r}
+### Real data
+# genomes<-readRDS("genome.rda")
+data(genomes)
+
+G <- genomes$genotypes
+X. = G[,sample(1:ncol(G),size = 250)]
+N=nrow(X.)
+M=ncol(X.)
+
+### Dummy data
+Xdummy<-X.
+Xdummy[is.numeric(Xdummy)]<-sample(c(0,1,2),size = length(Xdummy),replace = TRUE)
+
+### Decide real vs dummy
+X.<-Xdummy
+
+```
+
+
+```{r}
+hist(X., xlab="allele dossage",main="")
+```
+
+## Mean center and variance scale
+```{r}
+# Center and scale genome matrix
+X. = apply(X., 2, function(x) { x[ x== (-1)] <- 1 ; x})
+X. = apply(X., 2, function(x) { x[ is.na(x)] <- 1 ; x})
+# X. = apply(X., 2, function(x) { x - 1 }) ## this centers the matrix in 0
+X = apply(X.,2, function(x) {
+    mu=mean(x)
+    sig=sd(x)+1e-10
+    (x-mu)/sig
+  } )
+
+# Check it worked
+# apply(X,2,mean)
+# apply(X,2,var)
+```
+
+## Calculation of LD based on raw covariation
+```{r}
+# Calculate
+V= t(X) %*% X
+V= 1/N * t(X) %*% X
+D = diag(V)
+
+# Check it works, compared to base function in R
+plot(var(X),V)
+
+```
+
+### Generalized inverse matrix
+```{r}
+Vinv=MASS::ginv(V)
+Vinv=solve(V)
+```
+
+##  Association with a Gaussian trait
+```{r}
+set.seed(0)
+Y = rnorm(N,mean=1,sd=1)
+Y = meanvarcent(Y)
+qplot(Y,geom="histogram",main="Gaussian phenotype")
+```
+
+##### Calculate coefficients
+```{r, fig.asp = 1.2}
+b= solve(t(X)%*%X) %*% t(X) %*% Y 
+b2=1/N * Vinv %*% t(X) %*% Y  # This is also a good approximation
+var_b=sapply(1:M,
+                 function(m) 
+                   solve(N*t(X[,m])%*%X[,m]) %*% t(Y - (X[,m]*b[m])) %*% (Y - (X[,m]*b[m])) ^2
+                 )
+
+bgwa=sapply(1:M,function(m) solve(t(X[,m])%*%X[,m]) %*% t(X[,m]) %*% Y)
+var_bgwa= sapply(1:M,
+                 function(m) 
+                   solve(N*t(X[,m])%*%X[,m]) %*% t(Y - (X[,m]*bgwa[m])) %*% (Y - (X[,m]*bgwa[m]))^2
+                 )
+
+p0<-ggdotscolor(x=b,y=bgwa,
+            ylab =  expression(beta[gwa]),
+            xlab =  expression(beta)
+            ) %>% addggregression(se=FALSE)
+p1<-ggplot(data.frame(bgwa)) +geom_histogram(aes(x=bgwa)) +xlab(expression(beta[gwa]))
+p2<-ggplot(data.frame(bgwa)) +geom_histogram(aes(x=b)) +xlab(expression(beta))
+
+plot_grid(p0,plot_grid(p1,p2,ncol=2),
+          ncol=1)
+
+```
+
+# Calculate the residual variance
+```{r, results="asis"}
+MSE= 1/N * sum( (Y - (X %*% b))^2 )
+MSEgwa= 1/N * t(Y - (X %*% bgwa)) %*% (Y - (X %*% bgwa))
+
+print(MSEgwa)
+print(MSE)
+
+```
+
+## Association with a Gaussian trait generated from different architectures
+#### Gaussian effects
+```{r}
+eff=rnorm(ncol(X),mean = 0,sd = 1)
+eff.gauss=eff
+
+Y=X. %*% eff # this is right!
+Y = meanvarcent(Y)
+qplot(Y,geom="histogram",main="Phenotype from Gaussian SNP effects")
+Y.gauss=Y
+```
+
+#### Exponential effects
+```{r}
+eff=rgamma(ncol(X),0.1,0.1)
+eff =eff /sd(eff)
+eff=eff* sample(c(-1,1),ncol(X),replace = TRUE)
+eff=sample(c(-1,0,1),replace = TRUE, prob = c(0.025,0.95,0.025),size = ncol(X))
+eff.skewed=eff
+
+Y=X. %*% eff # this is right!
+Y = meanvarcent(Y)
+qplot(Y,geom="histogram",main="Phenotype from exponential SNP effects")
+Y.skewed=Y
+```
+
+
+##### Calculate coefficients
+```{r, fig.asp = 0.5}
+b= solve(t(X)%*%X)  %*% t(X) %*% Y.gauss 
+bgwa=sapply(1:M,function(m) solve(t(X[,m])%*%X[,m]) %*% t(X[,m]) %*% Y.gauss)
+
+p1<-ggplot(data.frame(eff=eff.gauss,b,bgwa)) +
+  geom_point(aes(x=eff,y=bgwa),shape=1) +
+  stat_smooth(aes(x=eff,y=bgwa),method="glm",se=FALSE,col="black")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=3,label=format(cor.test(bgwa,eff)$estimate,digits=3)))+
+
+  geom_point(aes(x=eff,y=b),shape=1,col="red") +
+  stat_smooth(aes(x=eff,y=b),method="glm",se=FALSE,col="red")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=5,label=format(cor.test(b,eff)$estimate,digits=3),color="red"))+
+
+  ylab(expression(paste("estimated ",beta)))+
+  xlab("True effect")+
+  guides(color=FALSE)
+# p1
+
+b= solve(t(X)%*%X) %*% t(X) %*% Y.skewed
+bgwa=sapply(1:M,function(m) solve(t(X[,m])%*%X[,m]) %*% t(X[,m]) %*% Y.skewed)
+
+p2<-ggplot(data.frame(eff=eff.skewed,b,bgwa)) +
+  geom_point(aes(x=eff,y=bgwa),shape=1) +
+  stat_smooth(aes(x=eff,y=bgwa),method="glm",se=FALSE,col="black")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=3,label=format(cor.test(bgwa,eff)$estimate,digits=3)))+
+
+  geom_point(aes(x=eff,y=b),shape=1,col="red") +
+  stat_smooth(aes(x=eff,y=b),method="glm",se=FALSE,col="red")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=5,label=format(cor.test(b,eff)$estimate,digits=3),color="red"))+
+  ylab(expression(paste("estimated ",beta)))+
+  xlab("True effect")+
+  guides(color=FALSE)
+# p2
+
+plot_grid(p1,p2,ncol=2,labels=c("Gaussian SNP effects","Exponential SNP effects"))
+
+```
+
+
+***** 
+# Application with real genotype for more realistic LD structure
+```{r}
+### Real data
+# genomes<-readRDS("genome.rda")
+data(genomes)
+
+G <- genomes$genotypes
+X. = G[,sample(1:ncol(G),size = 250)]
+N=nrow(X.)
+M=ncol(X.)
+
+```
+
+## Mean center and variance scale
+```{r}
+# Center and scale genome matrix
+X. = apply(X., 2, function(x) { x[ x== (-1)] <- 1 ; x})
+X. = apply(X., 2, function(x) { x[ is.na(x)] <- 1 ; x})
+# X. = apply(X., 2, function(x) { x - 1 }) ## this centers the matrix in 0
+X = apply(X.,2, function(x) {
+    mu=mean(x)
+    sig=sd(x)+1e-10
+    (x-mu)/sig
+  } )
+
+```
+## Calculation of LD based on raw covariation
+```{r}
+# Calculate
+V = 1/N * t(X) %*% X
+D = diag(V)
+
+```
+
+<!-- ### Approximate positive definite matrix if it is not pd -->
+<!-- ```{r} -->
+<!-- V.near<-Matrix::nearPD(V) -->
+<!-- # attributes(V.near) -->
+<!-- plot(V.near$mat,V) -->
+<!-- V=V.near$mat -->
+<!-- ``` -->
+
+<!-- ### Approximate inverse matrix if there is no solution with Choleski factorization -->
+<!-- ```{r} -->
+<!-- L <- chol(V) -->
+<!-- Vinv=solve(V) # This might not work -->
+<!-- Vinv.approx=solve(t(L)) %*% solve(L) -->
+<!-- # Vinv=Vinv.approx -->
+<!-- ``` -->
+
+### Generalized inverse matrix
+```{r}
+Vinv=MASS::ginv(V)
+Vinv=solve(V)
+```
+
+## Association with a trait generated from different architectures
+##### Calculate coefficients
+```{r}
+b= solve(t(X)%*%X)  %*% t(X) %*% Y.gauss # check if dividing is needed by individual
+bgwa=sapply(1:M,function(m) solve(t(X[,m])%*%X[,m]) %*% t(X[,m]) %*% Y.gauss)
+
+
+p1<-ggplot(data.frame(eff=eff.gauss,b,bgwa)) +
+  geom_point(aes(x=eff,y=bgwa),shape=1) +
+  stat_smooth(aes(x=eff,y=bgwa),method="glm",se=FALSE,col="black")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=3,label=format(cor.test(bgwa,eff)$estimate,digits=3))) +
+
+  geom_point(aes(x=eff,y=b),shape=1,col="red") +
+  stat_smooth(aes(x=eff,y=b),method="glm",se=FALSE,col="red")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=5,label=format(cor.test(b,eff)$estimate,digits=3),color="red"))+
+
+  ylab(expression(paste("estimated ",beta)))+
+  xlab("True effect")+
+  guides(color=FALSE)
+# p1
+
+b= solve(t(X)%*%X)  %*% t(X) %*% Y.skewed
+bgwa=sapply(1:M,function(m) solve(t(X[,m])%*%X[,m]) %*% t(X[,m]) %*% Y.skewed)
+
+p2<-ggplot(data.frame(eff=eff.skewed,b,bgwa)) +
+  geom_point(aes(x=eff,y=bgwa),shape=1) +
+  stat_smooth(aes(x=eff,y=bgwa),method="glm",se=FALSE,col="black")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=3,label=format(cor.test(bgwa,eff)$estimate,digits=3)))+
+
+  geom_point(aes(x=eff,y=b),shape=1,col="red") +
+  stat_smooth(aes(x=eff,y=b),method="glm",se=FALSE,col="red")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=5,label=format(cor.test(b,eff)$estimate,digits=3),color="red"))+
+  ylab(expression(paste("estimated ",beta)))+
+  xlab("True effect")+
+  guides(color=FALSE)
+# p2
+
+plot_grid(p1,p2,ncol=2,labels=c("Gaussian SNP effects","Exponential SNP effects"))
+
+```

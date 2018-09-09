@@ -1,0 +1,28 @@
+---
+title: "Genotype tables"
+# subtitle: "EQUATIONS"
+author: "Moi Exposito-Alonso"
+date: '`r Sys.Date()`'
+output:
+  pdf_document:
+  header-inclusdes:
+   - \usepackage{amsmath}
+   - \usepackage{caption}
+   - \usepackage{subcaption}
+   - \usepackage{graphicx}
+  #html_document: default
+  #header-includes:
+  #- \setlength{\parindent}{4em}
+  #- \setlength{\parskip}{0em}
+---
+
+\
+\begin{center}
+\begin{tabular}{ c | c  c}
+     &       B            &     b       \\
+  \hline
+  A & $(1+s_A)(1+s_B) $&$ (1+s_{A}) (1-s_{B})  $\\
+  a & $(1- s_{A})(1+ s_{B})$&$ (1-s_A)(1-s_B)          $
+\end{tabular}
+\end{center}
+\

@@ -14,7 +14,8 @@ mafsim<-function(p, type='uniform',rate=1, cutoff=1){
 
 Xsim<-function(n=100,p=1000, maf){
   # X<-cbind(sapply(1:p,function(i) rbinom(n = n,size=1,prob = maf[i])))
-  X<-cbind(sapply(1:p,function(i) sample(c(-1,+1),size=n,replace=T,prob = c(maf[i],1-maf[i] ) )))
+#  X<-cbind(sapply(1:p,function(i) sample(c(-1,+1),size=n,replace=T,prob = c(maf[i],1-maf[i] ) )))
+  X<-cbind(sapply(1:p,function(i) sample(c(-1,+1),size=n,replace=T,prob = c(1-maf[i],maf[i] ) )))
 return(X)
 }
 
@@ -28,10 +29,21 @@ wsim<-function(X,s,mode=1, epi=1,mu=1){
 }
 
 
-sampleEys<-function(Eys,a,b,p,rep=5){
-  Yobs<-c( sapply(1:nrow(Go), function(i) rnorm(rep,Eys[i],a+(Eys[i]*b))))
+
+#sampleEys<-function(Eys,a,b,p,rep=5){
+#  Yobs<-c( sapply(1:nrow(Go), function(i) rnorm(rep,Eys[i],a+(Eys[i]*b))))
+#  Yobs[Yobs<0] <-0
+#  if(p!=0) Yobs[sample(1:length(Yobs),size = ceiling(p*length(Yobs)) ) ]<-0
+
+sampleEys<-function(Eys,a,b,p,rep=1){
+  Yobs<-c()
+  for(i in 1:length(Eys)){
+    Yobs<-c(Yobs,rnorm(rep,Eys[i], abs(a+(Eys[i]*b)) ))
+  }
   Yobs[Yobs<0] <-0
-  if(p!=0) Yobs[sample(1:length(Yobs),size = ceiling(p*length(Yobs)) ) ]<-0
+  if(p!=0){
+    Yobs[sample(1:length(Yobs),size = ceiling(p*length(Yobs)) ) ]<-0
+  }
 return(Yobs)
 }
 
@@ -77,7 +89,6 @@ multievo<-function(p,
 
 
 #####**********************************************************************#####
-popsizeplot(obj)
 
 popsizeplot<-function(obj){
 
@@ -96,7 +107,8 @@ p<-ggplot(dat) +
 
 
 ####  Allele frequencies
-popsizeplot<-function(obj){
+
+allelefreqplot<-function(obj){
 
   dat_<-sapply(obj,function(x) apply(as.matrix(x),2,sum) )
   dat<-data.frame(popsize=as.numeric(dat_), generations=1:nrow(dat_), replicate=sort(rep(1:ncol(dat_), nrow(dat_)))  )
@@ -123,19 +135,4 @@ p<-ggplot(dat) +
   # }
   return(p)
 }
-
-#
-# library(reshape2)
-# library(tidyr)
-# library(dplyr)
-#
-# mini_iris <- iris[c(1, 51, 101), ]
-#
-# # melt
-# melted1 <- mini_iris %>% melt(id.vars = "Species",value.name = 'dimension',variable.name='trait')
-# melted2 <- mini_iris %>% gather(key='trait', value='dimension', -Species)
-#
-# # cast
-# melted1 %>% dcast(Species ~ trait, value.var = "dimension")
-# melted2 %>% spread(key='trait', value='dimension')
 

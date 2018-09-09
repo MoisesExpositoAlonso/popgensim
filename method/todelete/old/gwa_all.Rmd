@@ -1,0 +1,304 @@
+---
+title: "Conditional model for Genome-Wide Selection"
+subtitle: ""
+author: "Moi Exposito-Alonso"
+date: '`r Sys.Date()`'
+output:
+  # pdf_document:
+  # header-inclusdes:
+  #  - \usepackage{amsmath}
+  #  - \usepackage{caption}
+  #  - \usepackage{subcaption}
+  #  - \usepackage{graphicx}
+  html_document: default
+  header-includes:
+  - \setlength{\parindent}{4em}
+  - \setlength{\parskip}{0em}
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE)
+set.seed(1)
+```
+
+
+```{r packages, include=FALSE}
+## Load packages
+library(devtools)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(xtable)
+
+load_all('.')
+# library('gws')
+library(moiR)
+library(bigsnpr)
+library(bigstatsr)
+
+```
+
+*****
+## 1 Subset random positions 
+```{r}
+### Real data
+# genomes<-readRDS("genome.rda")
+data(genomes)
+G <- genomes$genotypes
+
+X.random = inputena.mat(G[,sample(1:ncol(G),size = 600)])
+N=nrow(X.random)
+M=ncol(X.random)
+
+qplot(fn(X.random), xlab="allele dossage",main="")
+
+```
+
+## 2 Subset a window
+```{r}
+
+X.window =inputena.mat(G[,c(1:600)]) # Instead of sampling, I get them consecutive
+N=nrow(X.window)
+M=ncol(X.window)
+
+qplot(fn(X.window), xlab="allele dossage",main="")
+
+```
+
+<!-- ###################################################################### -->
+
+## 3 Association with a Gaussian trait generated from different architectures
+### Gaussian effects
+```{r}
+
+eff.gauss=rnorm(M,mean = 0,sd = 1)
+qplot(eff.gauss,geom="histogram",main="Simulated weak Gaussian SNP effects")
+
+Y.random.gauss=meanvarcent(X.random %*% eff.gauss)
+Y.window.gauss=meanvarcent(X.window %*% eff.gauss)
+
+```
+
+### Discrete large effects
+```{r}
+prob=0.005
+eff.skewed=sample(c(-1,0,1),replace = TRUE, prob = c(prob,1-2*prob,prob),size = M)
+# eff.skewed=rexp(n=M,rate = 10e6)
+
+qplot(eff.skewed,geom="histogram",main="Simulated discrete large SNP effects")
+
+Y.random.skewed=meanvarcent(X.random %*% eff.skewed)
+Y.window.skewed=meanvarcent(X.window %*% eff.skewed)
+Y.window.skewed2=meanvarcent((X.window %*% eff.skewed ) *(X.window %*% eff.skewed ))
+Y.window.skewed2=meanvarcent((X.window %*% eff.skewed ) *(X.window %*% eff.skewed ))
+
+plot(Y.window.skewed,Y.window.skewed2)
+
+
+Y.window.mixture= meanvarcent((X.window %*% eff.skewed ) + (X.window %*% (eff.gauss/10) ))
+Y.window.mixture= meanvarcent((X.window %*% eff.skewed ) * (X.window %*% (eff.gauss/10) ))
+
+
+X.window %*% eff.skewed
+
+
+```
+
+## 4 Calculate coefficients
+```{r, fig.asp = 0.5}
+
+
+b.random.gauss=cgwa(X.random,Y.random.gauss) 
+b.random.skewed=cgwa(X.random,Y.random.skewed) 
+b.window.gauss=cgwa(X.window,Y.window.gauss) 
+b.window.skewed=cgwa(X.window,Y.window.skewed) 
+
+bgwa.random.gauss=gwa(X.random,Y.random.gauss) 
+bgwa.random.skewed=gwa(X.random,Y.random.skewed) 
+bgwa.window.gauss=gwa(X.window,Y.random.gauss) 
+bgwa.window.skewed=gwa(X.window,Y.random.skewed) 
+
+blasso.random.gauss=lassogwa(X.random,Y.random.gauss) 
+blasso.random.skewed=lassogwa(X.random,Y.random.skewed) 
+blasso.window.gauss=lassogwa(X.window,Y.window.gauss) 
+blasso.window.skewed=lassogwa(X.window,Y.window.skewed) 
+
+bridge.random.gauss=ridgegwa(X.random,Y.random.gauss) 
+bridge.random.skewed=ridgegwa(X.random,Y.random.skewed) 
+bridge.window.gauss=ridgegwa(X.window,Y.window.gauss) 
+bridge.window.skewed=ridgegwa(X.window,Y.window.skewed) 
+
+
+plot(ridgegwa(X.random,Y.random.skewed) ,eff.skewed)
+plot(ridgegwa(X.random,Y.random.skewed,type = "ld") ,eff.skewed,lambda=100)
+plot( 
+     ridgegwa(X.random,Y.random.skewed,type = "penalized",k = 100,x0 = 0.99,lambda = 1)
+  ,eff.skewed)
+
+plot( 
+     ridgegwa(X.window,Y.window.skewed,type = "penalized",k = 100,x0 = 0.9,lambda = 1)
+  ,eff.skewed)
+
+plot( 
+     ridgegwa(X.window,Y.window.gauss,type = "penalized",k = 10,x0 = 0.5,lambda = 1)
+  ,eff.gauss)
+plot( 
+     ridgegwa(X.random,Y.random.gauss,type = "penalized",k=1,x0 = 0.5,lambda=.1)
+  ,eff.gauss)
+
+
+plot( 
+     # ridgegwa(X.window,Y.window.skewed,type = "ldpenalized")
+     ridgegwa(X.window,Y.window.skewed,type = "penalized")
+  ,eff.skewed)
+plot( 
+      ridgegwa(X.window,Y.window.gauss,type = "penalized")
+     # ridgegwa(X.window,Y.window.gauss,type = "ldpenalized")
+  ,eff.gauss)
+
+plot( 
+      # ridgegwa(X.random,Y.random.gauss,type = "penalized")
+     ridgegwa(X.random,Y.random.gauss,type = "ldpenalized")
+  ,eff.gauss)
+
+plot( 
+     ridgegwa(X.random,Y.random.gauss,type = "penalized")
+    ,gwa(X.random,Y.random.gauss)
+)
+plot( 
+     ridgegwa(X.random,Y.random.gauss,type = "penalized")
+    ,gwa(X.random,Y.random.gauss)
+)
+
+plot( 
+     ridgegwa(X.window,Y.window.gauss,type = "penalized")
+    ,gwa(X.window,Y.window.gauss)
+)
+
+
+plot( 
+      ridgegwa(X.window,Y.window.mixture,type = "penalized")
+  ,eff.skewed*eff.gauss/10)
+
+
+cgwa(X.random,Y.random.gauss) %>% hist
+cgwa(X.random,Y.random.skewed) %>% hist
+cgwa(X.window,Y.window.gauss) %>% hist
+cgwa(X.window,Y.window.skewed) %>% hist
+
+plot(cgwa(X.random,Y.random.skewed) ,eff.skewed)
+
+warning(FALSE)
+bridge.random.gauss=ridgegwa(X.random,Y.random.gauss,lambda = 1) 
+cor.test(eff.gauss,bridge.random.gauss)$estimate
+bridge.random.gauss=ridgegwa(X.random,Y.random.gauss,lambda = 0.1) 
+cor.test(eff.gauss,bridge.random.gauss)$estimate
+bridge.random.gauss=ridgegwa(X.random,Y.random.gauss,lambda = .01) 
+cor.test(eff.gauss,bridge.random.gauss)$estimate
+bridge.random.gauss=ridgegwa(X.random,Y.random.gauss,lambda = .001) 
+cor.test(eff.gauss,bridge.random.gauss)$estimate
+bridge.random.gauss=ridgegwa(X.random,Y.random.gauss,lambda = .0001) 
+cor.test(eff.gauss,bridge.random.gauss)$estimate
+
+bridge.random.gauss=regularridgegwa(X.random,Y.random.gauss,lambda = .0001) 
+bridge.random.gauss=regularridgegwa(X.random,Y.random.gauss,lambda = .001) 
+cor.test(eff.gauss,bridge.random.gauss) 
+
+lm(eff.gauss~bridge.random.gauss) %>% summary
+bridge.random.gauss=cgwa(X.random,Y.random.gauss) 
+lm(eff.gauss~bridge.random.gauss) %>% summary
+
+
+# sum(abs(eff.gauss))
+# sum(abs(bgwa.random.gauss))
+# sum(abs(b.random.gauss))
+# 
+# sum(abs(eff.skewed))
+# sum(abs(bgwa.random.skewed))
+# sum(abs(b.random.skewed))
+# 
+# 
+# sum(abs(eff.gauss))
+# sum(abs(bgwa.window.gauss))
+# sum(abs(b.window.gauss))
+# 
+# sum(abs(eff.skewed))
+# sum(abs(bgwa.window.skewed))
+# sum(abs(b.window.skewed))
+
+
+```
+
+## 4 Visualize differences in \beta estimates
+#### Simulation with SNPs distributed randomly in the genome (low LD)
+The plot below indicates that the best performing for a sparse genetic architecture is Lasso, while for a polygenic architecture, with many Gaussian effects, the conditional model is still the best.
+
+```{r,fig.width=6, fig.asp=1.5}
+
+grid1<-plot_grid(ncol=2,
+addggregression(ggdotscolor(x=eff.skewed,y=bgwa.random.skewed) + ggtitle('marginal | skewed')) ,
+addggregression(ggdotscolor(x=eff.gauss,y=bgwa.random.gauss) + ggtitle('marginal | gauss')) ,
+
+addggregression(ggdotscolor(x=eff.skewed,y=b.random.skewed) + ggtitle('conditional | skewed')) ,
+addggregression(ggdotscolor(x=eff.gauss,y=b.random.gauss) + ggtitle('conditional | gauss')) ,
+
+addggregression(ggdotscolor(x=eff.skewed,y=blasso.random.skewed) + ggtitle('lasso | skewed')) , 
+addggregression(ggdotscolor(x=eff.gauss,y=blasso.random.gauss) + ggtitle('lasso | gauss')) ,
+
+addggregression(ggdotscolor(x=eff.skewed,y=bridge.random.skewed) + ggtitle('ridge | skewed')) , 
+addggregression(ggdotscolor(x=eff.gauss,y=bridge.random.gauss) + ggtitle('ridge | gauss')) 
+) + ggtitle('Random SNPs')
+
+grid1
+save_plot(file='figs/random_snps_simulationgwa.pdf', grid1,base_width = 10,base_height = 12)
+
+
+
+
+
+
+```
+
+#### Simulation with SNPs distributed contiguously (high LD)
+
+The plot below indicates that once LD is high, only the conditional model performs relatively well. The marginal and the lasso perform poorly.
+
+```{r,fig.width=6, fig.asp=1.5}
+
+grid2<-plot_grid(ncol=2,
+addggregression(ggdotscolor(x=eff.skewed,y=bgwa.window.skewed) + ggtitle('marginal | skewed')) ,
+addggregression(ggdotscolor(x=eff.gauss,y=bgwa.window.gauss) + ggtitle('marginal | gauss')) ,
+
+addggregression(ggdotscolor(x=eff.skewed,y=b.window.skewed) + ggtitle('conditional | skewed')) ,
+addggregression(ggdotscolor(x=eff.gauss,y=b.window.gauss) + ggtitle('conditional | gauss')) ,
+
+addggregression(ggdotscolor(x=eff.skewed,y=blasso.window.skewed) + ggtitle('lasso | skewed')) , 
+addggregression(ggdotscolor(x=eff.gauss,y=blasso.window.gauss) + ggtitle('lasso | gauss')) ,
+
+addggregression(ggdotscolor(x=eff.skewed,y=bridge.window.skewed) + ggtitle('bridge | skewed')) , 
+addggregression(ggdotscolor(x=eff.gauss,y=bridge.window.gauss) + ggtitle('bridge | gauss')) 
+
+)
+grid2
+save_plot(file='figs/window_snps_simulationgwa.pdf', grid2,base_width = 10,base_height = 12)
+
+```
+
+<!-- ```{r} -->
+
+<!-- d=data.frame(eff=eff.skewed,b,bgwa) -->
+<!-- d$position=1:nrow(d) -->
+
+<!-- ggplot(d) + geom_line(aes(y=abs(bgwa),x=position),color="black",alpha=0.5) + geom_line(aes(y=abs(b),x=position),color="red",alpha=0.5) +  ylab(expression(paste("Absolute ",beta))) -->
+
+<!-- ggplot(d) + geom_line(aes(y=abs(bgwa),x=position),color="black",alpha=0.5) + geom_line(aes(y=abs(b),x=position),color="red",alpha=0.5) +  ylab(expression(paste("Absolute ",beta))) + -->
+<!--   xlim(c(0,100)) -->
+
+<!-- ggplot(d) + geom_line(aes(y=abs(bgwa) - abs(b),x=position),color="black",alpha=0.5)+ -->
+<!--   geom_hline(yintercept = 0,lty="dashed") + -->
+<!--   ylab(expression(paste(beta[gwa]," - ",beta," (absolute difference)"))) + -->
+<!--   xlim(c(0,100)) -->
+
+<!-- ``` -->
+

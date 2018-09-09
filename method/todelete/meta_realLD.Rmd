@@ -1,0 +1,179 @@
+---
+title: "Meta-analysis model for Genome-Wide Selection"
+subtitle: "Simulations and real LD structure"
+author: "Moi Exposito-Alonso"
+date: '`r Sys.Date()`'
+output:
+  html_document: default
+  header-includes:
+  - \setlength{\parindent}{4em}
+  - \setlength{\parskip}{0em}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(1)
+```
+
+
+```{r packages, include=FALSE}
+## Load packages
+library(devtools)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(xtable)
+
+load_all('.')
+# library('gws')
+library(moiR)
+library(bigsnpr)
+library(bigstatsr)
+
+```
+
+*****
+# Application with simulated genotype and phenotype data
+
+## 1 Generate genotypes 
+```{r}
+### Real data
+# genomes<-readRDS("genome.rda")
+data(genomes)
+
+G <- genomes$genotypes
+X. = G[,sample(1:ncol(G),size = 600)]
+N=nrow(X.)
+M=ncol(X.)
+
+```
+
+
+```{r}
+hist(X., xlab="allele dossage",main="")
+```
+
+### 1.2 Mean center and variance scale
+```{r}
+# Center and scale genome matrix
+X. = apply(X., 2, function(x) { x[ x== (-1)] <- 1 ; x})
+X. = apply(X., 2, function(x) { x[ is.na(x)] <- 1 ; x})
+# X. = apply(X., 2, function(x) { x - 1 }) ## this centers the matrix in 0
+X = apply(X.,2, function(x) {
+    mu=mean(x)
+    sig=sd(x)+1e-10
+    (x-mu)/sig
+  } )
+
+# Check it worked
+# apply(X,2,mean)
+# apply(X,2,var)
+```
+
+### 1.3 Calculation of LD based on raw covariation
+```{r}
+# Calculate
+V= t(X) %*% X
+V= 1/N * t(X) %*% X
+D = diag(V)
+
+# Check it works, compared to base function in R
+# plot(var(X),V)
+qplot(x = fn(V),geom="histogram", xlab="LD distribution",xlim=c(-1,1))
+
+```
+
+### 1.4 Generalized inverse matrix
+```{r}
+Vinv=MASS::ginv(V)
+
+```
+
+## 2 Association with a Gaussian trait generated from different architectures
+### 2.1 Gaussian effects
+```{r}
+eff=rnorm(ncol(X),mean = 0,sd = 1)
+eff.gauss=eff
+
+Y=X. %*% eff # this is right!
+Y = meanvarcent(Y)
+qplot(Y,geom="histogram",main="Phenotype from Gaussian SNP effects")
+Y.gauss=Y
+```
+
+### 2.2 Exponential effects
+```{r}
+eff=rgamma(ncol(X),0.1,0.1)
+eff =eff /sd(eff)
+eff=eff* sample(c(-1,1),ncol(X),replace = TRUE)
+eff=sample(c(-1,0,1),replace = TRUE, prob = c(0.025,0.95,0.025),size = ncol(X))
+eff.skewed=eff
+
+Y=X. %*% eff # this is right!
+Y = meanvarcent(Y)
+qplot(Y,geom="histogram",main="Phenotype from exponential SNP effects")
+Y.skewed=Y
+```
+
+## 3 Calculate coefficients
+```{r, fig.asp = 0.5}
+b= 1/N * Vinv %*% t(X) %*% Y.gauss 
+bgwa=sapply(1:M,function(m) solve(t(X[,m])%*%X[,m]) %*% t(X[,m]) %*% Y.gauss)
+MSE= 1/N * sum( (Y.gauss - (X %*% b))^2 )
+MSEgwa= 1/N * t(Y.gauss - (X %*% bgwa)) %*% (Y.gauss - (X %*% bgwa))
+print(MSEgwa)
+print(MSE)
+
+p1<-ggplot(data.frame(eff=eff.gauss,b,bgwa)) +
+  geom_point(aes(x=eff,y=bgwa),shape=1) +
+  stat_smooth(aes(x=eff,y=bgwa),method="glm",se=FALSE,col="black")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=3,label=format(cor.test(bgwa,eff)$estimate,digits=3)))+
+
+  geom_point(aes(x=eff,y=b),shape=1,col="red") +
+  stat_smooth(aes(x=eff,y=b),method="glm",se=FALSE,col="red")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=5,label=format(cor.test(b,eff)$estimate,digits=3),color="red"))+
+
+  ylab(expression(paste("estimated ",beta)))+
+  xlab("True effect")+
+  guides(color=FALSE)
+# p1
+
+b= 1/N * Vinv %*% t(X) %*% Y.skewed
+bgwa=sapply(1:M,function(m) solve(t(X[,m])%*%X[,m]) %*% t(X[,m]) %*% Y.skewed)
+MSE= 1/N * sum( (Y.skewed - (X %*% b))^2 )
+MSEgwa= 1/N * t(Y.skewed - (X %*% bgwa)) %*% (Y.skewed - (X %*% bgwa))
+print(MSEgwa)
+print(MSE)
+
+p2<-ggplot(data.frame(eff=eff.skewed,b,bgwa)) +
+  geom_point(aes(x=eff,y=bgwa),shape=1) +
+  stat_smooth(aes(x=eff,y=bgwa),method="glm",se=FALSE,col="black")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=3,label=format(cor.test(bgwa,eff)$estimate,digits=3)))+
+
+  geom_point(aes(x=eff,y=b),shape=1,col="red") +
+  stat_smooth(aes(x=eff,y=b),method="glm",se=FALSE,col="red")+
+  geom_text(aes(x=-Inf,y=+Inf,hjust=-1,vjust=5,label=format(cor.test(b,eff)$estimate,digits=3),color="red"))+
+  ylab(expression(paste("estimated ",beta)))+
+  xlab("True effect")+
+  guides(color=FALSE)
+# p2
+
+plot_grid(p1,p2,ncol=2,labels=c("Gaussian SNP effects","Exponential SNP effects"))
+
+```
+
+## 4 Visualize differences in \beta estimates
+
+```{r,warning=FALSE}
+
+d=data.frame(eff=eff.skewed,b,bgwa)
+d$position=1:nrow(d)
+
+ggplot(d) + geom_line(aes(y=abs(bgwa),x=position),color="black",alpha=0.5) + geom_line(aes(y=abs(b),x=position),color="red",alpha=0.5) +  ylab(expression(paste("Absolute ",beta)))
+
+ggplot(d) + geom_line(aes(y=abs(bgwa),x=position),color="black",alpha=0.5) + geom_line(aes(y=abs(b),x=position),color="red",alpha=0.5) +  ylab(expression(paste("Absolute ",beta))) +
+  xlim(c(0,100))
+
+```
+
+*****

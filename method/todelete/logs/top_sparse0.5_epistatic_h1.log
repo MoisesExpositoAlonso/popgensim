@@ -1,0 +1,26 @@
+
+ ----------------------------------------------------- 
+
+ Interpreting arguments:
+
+  --> SNPs subset:  top 
+
+  --> Sparcity:  0.5 
+
+  --> Additivity/epistasis:  epistatic 
+
+  --> Heritability:  top 
+
+ ----------------------------------------------------- 
+Warning message:
+package ‘dplyr’ was built under R version 3.4.2 
+Loading or simulating a genome matrix
+Simulating SNP effects and phenotypes
+Estimating SNP effects using different models...
+non-numeric data provided
+attempting to force numeric
+Warning message:
+package ‘glmnet’ was built under R version 3.4.2 
+... running time was 50 seconds or 0.833333333333333 minutes or 0.0138888888888889 hours.
+Estimating SNP effects using LD matrix change...
+... starting optimization ...

@@ -1,0 +1,45 @@
+---
+title: "Meta-analysis model for Genome-Wide Selection"
+subtitle: "EQUATIONS"
+author: "Moi Exposito-Alonso"
+date: '`r Sys.Date()`'
+output:
+  html_document: default
+  header-includes:
+  - \setlength{\parindent}{4em}
+  - \setlength{\parskip}{0em}
+---
+*****
+
+# The problem and the model
+
+Given a population of $N$ individuals genotyped for $M$ SNPs and for which a normally-distributed fitness phenotype $Y$ is measured, we aim to empirically estimate coefficients of selection through the genome. 
+
+$X$ is the genome matrix wih $N$ rows and $M$ columns. A regular multivariate linear model can be written as $Y = X\beta + \epsilon$, and each fixed effect in vector $\beta$ is tipically estimated in GWA studies for $1...j$ SNPs marginally as $\beta_{GWA j} = (X^{T}_{j}X_{j})^{-1} X_{j}^T Y$. 
+
+The problem is that when the different SNPs are not independent variables, the marginal effects will not reflect true effects. Biologically, this is the linkage dissequilibrium confounder. From $X$ this matrix we can obtain a linkage disquilibrium matrix between all SNPs, i.e. covariance matrix $V$, as $\frac{1}{N} X^T X$. The diagonal of this matrix is $D$.
+
+A trivial model extension to the above GWA approach is a multiple regression, what would allow to estimate \beta effects accounting for the $V$ covariance matrix: 
+
+$$\beta = (X^{T} X)^{-1} X^T Y = \frac{1}{N}V^{-1} X^T Y$$
+
+Or simplye from the previously estimated marginal effects: 
+
+$$\beta=V^{-1}D\beta_{GWA}$$
+
+The above development requires a invertible $V$. This is not possible when there are SNPs in complete linkage or when the number of SNPs is larger than the number of individuals, because $V$ is rank deficient. Several approaches exist to overcome this problem (Choleschy factorization, finding the nearest positive definite matrix with Higham 2002). We use the Moore-Penrose generalized inverse matrix. 
+
+## Biological significance
+
+Naturally, if $\beta_{GWA}$ estimate has a linkage dissequilibrium confounder while $\beta$ is free from that confounder, then the meanabsolute differences $(\beta_{GWA} - \beta) /\beta_{GWA}$ would indicate what proportion of the observed selection is due to background selection or hitchicking effects.
+
+The overall contribution to linked effects could perhaps be calculated based on mean square error improvement:
+
+$$ \bigg[ \frac{1}{N}(Y - X \beta_{GWA})^{T} (Y - X \beta_{GWA}) \bigg] -  \bigg[ \frac{1}{N}(Y - X \beta_{})^{T} (Y - X \beta_{}) \bigg] $$
+
+
+# Can observations in multiple environments be jointly analysed?
+
+A variance-covariance matrix can be generated to have between-SNP covariance of 0 across the two environments and the $V$ covariance within environment as $diag(2) \otimes V$. The estimation of \beta would then be carried out as before.
+
+

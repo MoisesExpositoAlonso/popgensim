@@ -1,0 +1,29 @@
+
+ ----------------------------------------------------- 
+
+ Interpreting arguments:
+
+  --> SNPs subset:  top 
+
+  --> Sparcity:  0.9 
+
+  --> A	... running time was 17.818 seconds or 03 minutes or 0.005 hours.
+Warning message:
+In sink() : no sink to remove
+	... running time was 17.818 seconds or 03 minutes or 0.005 hours.
+	... running time was 17.818 seconds or 03 minutes or 0.005 hours.
+	... running time was 17.818 seconds or 03 minutes or 0.005 hours.
+Error: unexpected symbol in "close(logf ile"
+	... running time was 17.818 seconds or 03 minutes or 0.005 hours.
+Warning message:
+In sink() : no sink to remove
+Warning message:
+In sink() : no sink to remove
+Warning message:
+In sink() : no sink to remove
+Warning message:
+In sink() : no sink to remove
+	... running time was 17.818 seconds or 03 minutes or 0.005 hours.
+Error in close.connection(logfile) : 
+  cannot close 'message' sink connection
+	... running time was 17.818 seconds or 03 minutes or 0.005 hours.
