@@ -7,8 +7,8 @@ M. Exposito-Alonso (2017) Wright-Fisher population simulations: a C++ and Shiny 
 
 \
 
-![Screenshot](Screen\ Shot\ 2018-09-08\ at\ 4.36.48\ PM.png)
-![Screenshot](Screen\ Shot\ 2018-09-08\ at\ 4.37.08\ PM.png)
+![Screenshot](image1.png)
+![Screenshot](image2.png)
 
 
 
